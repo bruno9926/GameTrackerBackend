@@ -1,0 +1,1 @@
+export { default as CreateGameDto } from './create-game.dto';
