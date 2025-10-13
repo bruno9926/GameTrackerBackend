@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, ValidationPipe } from "@nestjs/common";
 import { GamesService } from "./games.service";
 
 import { CreateGameDto } from "./games-dto";
@@ -14,7 +14,11 @@ export class GamesController {
 
     @Post()
     createGame(@Body() gameInput: CreateGameDto) {
-        console.log(gameInput);
         return this.gamesService.createGame(gameInput);
+    }
+
+    @Delete(':id')
+    deleteGame(@Param('id') id: string) {
+        return this.gamesService.deleteGame(id);
     }
 }

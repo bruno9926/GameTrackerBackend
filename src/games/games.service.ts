@@ -21,4 +21,9 @@ export class GamesService {
         this.games.push({ id: uuid(), ...gameInput})
         return this.getGames();
     }
+
+    async deleteGame(id: string): Promise<Game[]> {
+        this.games = this.games.filter(game => game.id !== id);
+        return this.getGames();
+    }
 }
