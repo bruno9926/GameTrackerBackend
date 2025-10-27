@@ -5,12 +5,14 @@ services:
     image: postgres:16
     container_name: nest-postgres
     restart: always
+    env_file:
+      - ./.env
     environment:
-      POSTGRES_USER: sofia
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: gamesdb
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
-      - "5432:5432"
+      - '${DB_PORT}:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
 
