@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type Game from './types/Game';
+import Game from './entities/Game.entity';
 import type CreateGameDto from './games-dto/create-game.dto';
 import { v4 as uuid } from 'uuid';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class GamesService {
@@ -20,6 +22,11 @@ export class GamesService {
       status: 'playing',
     },
   ];
+
+  constructor(
+    @InjectRepository(Game)
+    private readonly gameRepository: Repository<Game>
+  ) {}
 
   async getGames(): Promise<Game[]> {
     return this.games;

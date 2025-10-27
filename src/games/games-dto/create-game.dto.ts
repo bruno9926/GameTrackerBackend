@@ -1,4 +1,4 @@
-import Game from '../types/Game';
+import Game from '../entities/Game.entity';
 import { IsString, IsIn, IsNotEmpty } from 'class-validator';
 
 export default class CreateGameDto extends Game {
