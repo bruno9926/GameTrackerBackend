@@ -23,6 +23,10 @@ import { ConfigModule } from '@nestjs/config';
       database: process.env.DB_NAME,
       entities: [Game],
       synchronize: true,
+      ssl: process.env.POSTGRES_SSL === 'true',
+      extra: {
+        ssl: process.env.POSTGRES_SSL === 'true' ? { rejectUnauthorized: false } : null,
+      }
     }),
     GamesModule,
   ],
