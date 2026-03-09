@@ -6,7 +6,9 @@ import { GamesModule } from './games/games.module';
 // typeOrm
 import { TypeOrmModule } from '@nestjs/typeorm';
 import Game from './games/entities/Game.entity';
+import User from './users/entities/User.entity';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './users/auth.module';
 
 @Module({
   imports: [
@@ -21,7 +23,7 @@ import { ConfigModule } from '@nestjs/config';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [Game],
+      entities: [Game, User],
       synchronize: true,
       ssl: process.env.POSTGRES_SSL === 'true',
       extra: {
@@ -29,6 +31,7 @@ import { ConfigModule } from '@nestjs/config';
       }
     }),
     GamesModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

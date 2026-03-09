@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne } from "typeorm";
+import User from "../../users/entities/User.entity";
 
 export const GameStatus = {
   PLAYING: 'playing',
@@ -19,4 +20,7 @@ export default class Game {
 
     @Column({ default: GameStatus.PLAYING, type: 'enum', enum: GameStatus })
     status : GameStatusType
+
+    @ManyToOne(() => User, user => user.id, { nullable: true})
+    user?: User;
 }

@@ -14,11 +14,17 @@ export class GamesService {
   ) {}
 
   async getGames(): Promise<Game[]> {
-    return await this.gameRepository.find();
+    return await this.gameRepository.find({
+      where: {
+        user: {
+          id: "f2cf4587-7e37-487c-b20c-5bee1b3de17a",
+        },
+      },
+    });
   }
 
   async createGame(gameInput: CreateGameDto): Promise<Game[]> {
-    const game = this.gameRepository.create({ id: uuid(), ...gameInput });
+    const game = this.gameRepository.create({ id: uuid(), ...gameInput }); // i think putting the id here is not necessary since it is generated automatically, but i will leave it for now
     await this.gameRepository.save(game);
     return this.getGames();
   }
