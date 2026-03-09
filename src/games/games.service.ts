@@ -13,30 +13,30 @@ export class GamesService {
     private readonly gameRepository: Repository<Game>,
   ) {}
 
-  async getGames(): Promise<Game[]> {
+  async getGames(userId: string): Promise<Game[]> {
     return await this.gameRepository.find({
       where: {
         user: {
-          id: "f2cf4587-7e37-487c-b20c-5bee1b3de17a",
+          id: userId,
         },
       },
     });
   }
 
-  async createGame(gameInput: CreateGameDto): Promise<Game[]> {
-    const game = this.gameRepository.create({ id: uuid(), ...gameInput }); // i think putting the id here is not necessary since it is generated automatically, but i will leave it for now
+  async createGame(userId: string, gameInput: CreateGameDto): Promise<Game[]> {
+    const game = this.gameRepository.create({ ...gameInput, user: { id: userId } });
     await this.gameRepository.save(game);
-    return this.getGames();
+    return this.getGames(userId);
   }
 
-  async deleteGame(id: string): Promise<Game[]> {
-    await this.gameRepository.delete(id);
-    return this.getGames();
+  async deleteGame(userId: string, gameId: string): Promise<Game[]> {
+    await this.gameRepository.delete(gameId);
+    return this.getGames(userId);
   }
 
-  async updateGame(gameInput: UpdateGameDto): Promise<Game[]> {
+  async updateGame(userId: string, gameInput: UpdateGameDto): Promise<Game[]> {
     const { id, ...updateData } = gameInput;
     await this.gameRepository.update(gameInput.id, updateData);
-    return this.getGames();
+    return this.getGames(userId);
   }
 }
