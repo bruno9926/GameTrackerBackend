@@ -17,7 +17,7 @@ export class AuthService {
         private readonly passwordService: PasswordService,
     ) { }
 
-    async registerUser(registerInput: RegisterDto): Promise<User> {
+    async registerUser(registerInput: RegisterDto): Promise<Partial<User>> {
         const existingUser = await this.userRepository.findOne({ where: { email: registerInput.email } });
         if (existingUser) {
             throw new BadRequestException("User with this email already exists");
@@ -26,7 +26,12 @@ export class AuthService {
         const user = this.userRepository.create(
             await this.toUserEntity(registerInput)
         );
-        return this.userRepository.save(user);
+        const savedUser = await this.userRepository.save(user);
+        return {
+            id: savedUser.id,
+            name: savedUser.name,
+            email: savedUser.email,
+        };
     }
 
     async login(loginInput: LogInDto) {
@@ -47,8 +52,11 @@ export class AuthService {
             throw new BadRequestException("Invalid email or password");
         }
 
+        let userPublicData: Partial<User> = {...user};
+        delete userPublicData.password; // remove password before returning user data
         return {
             token: this.createToken(user),
+            user: userPublicData
         }
     }
 

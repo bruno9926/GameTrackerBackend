@@ -1,5 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne } from "typeorm";
-import User from "../../users/entities/User.entity";
+import User from "../../auth/entities/User.entity";
 
 export const GameStatus = {
   PLAYING: 'playing',
