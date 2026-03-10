@@ -12,6 +12,7 @@ import {
 import { GamesService } from './games.service';
 
 import { CreateGameDto, UpdateGameDto } from './games-dto';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
 @Controller('games')
 export class GamesController {
@@ -26,26 +27,31 @@ export class GamesController {
   }
 
   @Get()
-  getAllGames(@Req() req) {
-    const userId = this.getUserIdFromRequest(req);
+  getAllGames(@CurrentUser("id") userId: string) {
     return this.gamesService.getGames(userId);
   }
 
   @Post()
-  createGame(@Body() gameInput: CreateGameDto, @Req() req) {
-    const userId = this.getUserIdFromRequest(req);
+  createGame(
+    @Body() gameInput: CreateGameDto,
+    @CurrentUser("id") userId: string
+  ) {
     return this.gamesService.createGame(userId, gameInput);
   }
 
   @Put()
-  updateGame(@Body() gameInput: UpdateGameDto, @Req() req) {
-    const userId = this.getUserIdFromRequest(req);
+  updateGame(
+    @Body() gameInput: UpdateGameDto,
+    @CurrentUser("id") userId: string
+  ) {
     return this.gamesService.updateGame(userId, gameInput);
   }
 
   @Delete(':id')
-  deleteGame(@Param('id') id: string, @Req() req) {
-    const userId = this.getUserIdFromRequest(req);
+  deleteGame(
+    @Param('id') id: string,
+    @CurrentUser("id") userId: string
+  ) {
     return this.gamesService.deleteGame(userId, id);
   }
 }
