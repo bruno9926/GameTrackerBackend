@@ -2,6 +2,7 @@ import { Body, Post, Controller, Get, Req } from "@nestjs/common";
 import { AuthService } from "./services/auth.service";
 //dtos
 import { RegisterDto, LogInDto } from "./dtos";
+import { CurrentUser } from "./decorators/current-user.decorator";
 
 @Controller('auth')
 export class AuthController {
@@ -18,8 +19,8 @@ export class AuthController {
     }
 
     @Get('me')
-    me(@Req() req) {
-        return this.authService.getUser(req.user.id);
+    me(@CurrentUser("id") userId: string) {
+        return this.authService.getUser(userId);
     }
 
     @Post('logout')
