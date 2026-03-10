@@ -26,7 +26,7 @@ export default class AuthMiddleware implements NestMiddleware{
         const token = authHeader.split(" ")[1]; // Assuming the token is in the format "Bearer <token>"
 
         try {
-            const payload = jwt.verify(token, "SUPER_SECRET");
+            const payload = jwt.verify(token, process.env.JWT_SECRET) as UserPayload;
             req.user = payload as UserPayload; // we are sure that the payload will have the id property since we are adding it when we sign the token
             next();
         } catch (err) {

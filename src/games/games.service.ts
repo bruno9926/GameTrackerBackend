@@ -30,13 +30,13 @@ export class GamesService {
   }
 
   async deleteGame(userId: string, gameId: string): Promise<Game[]> {
-    await this.gameRepository.delete(gameId);
+    await this.gameRepository.delete({ id: gameId, user: { id: userId } });
     return this.getGames(userId);
   }
 
   async updateGame(userId: string, gameInput: UpdateGameDto): Promise<Game[]> {
     const { id, ...updateData } = gameInput;
-    await this.gameRepository.update(gameInput.id, updateData);
+    await this.gameRepository.update({ id, user: { id: userId } }, updateData);
     return this.getGames(userId);
   }
 }

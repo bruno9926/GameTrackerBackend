@@ -52,10 +52,14 @@ export class AuthService {
         }
     }
 
+    async getUser(id: string): Promise<User> {
+        return this.userRepository.findOne({ where: { id } });
+    }
+
     private createToken(user: User): string {
         return jwt.sign(
             { id: user.id },
-            "SUPER_SECRET",
+            process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
     }
