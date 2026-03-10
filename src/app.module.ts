@@ -6,7 +6,7 @@ import { GamesModule } from './games/games.module';
 // typeOrm
 import { TypeOrmModule } from '@nestjs/typeorm';
 import Game from './games/entities/Game.entity';
-import User from './auth/entities/User.entity';
+import User from './users/entities/User.entity';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 

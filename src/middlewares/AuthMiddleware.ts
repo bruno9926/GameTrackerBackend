@@ -1,7 +1,7 @@
 import { Injectable, NestMiddleware } from "@nestjs/common";
 import { NextFunction, Request, Response } from "express";
 import * as jwt from "jsonwebtoken";
-import { User } from "src/auth/entities";
+import { User } from "src/users/entities";
 
 type UserPayload = Pick<User, "id">; // we only want to add the id
 // extending the Request interfaces so we can add the user property to it

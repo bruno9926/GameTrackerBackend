@@ -1,32 +1,29 @@
 import { Injectable } from "@nestjs/common";
 import { LogInDto, RegisterDto } from "../dtos";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
 import { PasswordService } from "./password.service";
+import { UsersService } from "../../users/users.service";
 import * as jwt from "jsonwebtoken";
 
 import { BadRequestException } from "@nestjs/common";
 // entities
-import { User } from "../entities";
+import { User } from "../../users/entities";
 
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
         private readonly passwordService: PasswordService,
+        private readonly usersService: UsersService
     ) { }
 
     async registerUser(registerInput: RegisterDto): Promise<Partial<User>> {
-        const existingUser = await this.userRepository.findOne({ where: { email: registerInput.email } });
-        if (existingUser) {
+        const userExists = await this.usersService.userExists(registerInput.email);
+        if (userExists) {
             throw new BadRequestException("User with this email already exists");
         }
 
-        const user = this.userRepository.create(
+        const savedUser = await this.usersService.insertUser(
             await this.toUserEntity(registerInput)
         );
-        const savedUser = await this.userRepository.save(user);
         return {
             id: savedUser.id,
             name: savedUser.name,
@@ -37,11 +34,7 @@ export class AuthService {
     async login(loginInput: LogInDto) {
         const { email, password: passwordInput } = loginInput;
 
-        const user = await this.userRepository
-            .createQueryBuilder("user")
-            .addSelect("user.password")
-            .where("user.email = :email", { email })
-            .getOne();
+        const user = await this.usersService.getUserByEmail({ email, withPassword: true });
 
         if (!user) {
             throw new BadRequestException("Invalid email or password");
@@ -61,7 +54,7 @@ export class AuthService {
     }
 
     async getUser(id: string): Promise<User> {
-        return this.userRepository.findOne({ where: { id } });
+        return this.usersService.getUserById(id);
     }
 
     private createToken(user: User): string {
