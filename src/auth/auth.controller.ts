@@ -6,7 +6,7 @@ import { CurrentUser } from "./decorators/current-user.decorator";
 import { AuthGuard } from "./guards/auth.guard";
 
 @Controller('auth')
-@UseGuards(AuthGuard)
+//@UseGuards(AuthGuard)
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
