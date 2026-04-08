@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { LogInDto, RegisterDto } from "../dtos";
 import { PasswordService } from "./password.service";
 import { UsersService } from "../../users/users.service";
-import * as jwt from "jsonwebtoken";
+import { JwtService } from "@nestjs/jwt";
 
 import { BadRequestException } from "@nestjs/common";
 // entities
@@ -12,7 +12,8 @@ import { User } from "../../users/entities";
 export class AuthService {
     constructor(
         private readonly passwordService: PasswordService,
-        private readonly usersService: UsersService
+        private readonly usersService: UsersService,
+        private readonly jwtService: JwtService
     ) { }
 
     async registerUser(registerInput: RegisterDto): Promise<Partial<User>> {
@@ -45,10 +46,9 @@ export class AuthService {
             throw new BadRequestException("Invalid email or password");
         }
 
-        let userPublicData: Partial<User> = {...user};
-        delete userPublicData.password; // remove password before returning user data
+        const { password, ...userPublicData } = user;
         return {
-            token: this.createToken(user),
+            token: await this.createToken(user),
             user: userPublicData
         }
     }
@@ -57,12 +57,10 @@ export class AuthService {
         return this.usersService.getUserById(id);
     }
 
-    private createToken(user: User): string {
-        return jwt.sign(
-            { id: user.id },
-            process.env.JWT_SECRET,
-            { expiresIn: "1d" }
-        );
+    private async createToken(user: User): Promise<string> {
+        return this.jwtService.signAsync({
+            id: user.id
+        })
     }
 
     private async toUserEntity(registerInput: RegisterDto): Promise<User> {

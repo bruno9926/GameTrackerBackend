@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import Game from './entities/Game.entity';
 import type CreateGameDto from './games-dto/create-game.dto';
-import { v4 as uuid } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateGameDto } from './games-dto';

@@ -1,18 +1,16 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { GamesController } from './games.controller';
 import { GamesService } from './games.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import Game from './entities/Game.entity';
-// middlewares
-import { AuthMiddleware } from 'src/middlewares';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Game])],
+  imports: [
+    TypeOrmModule.forFeature([Game]),
+    AuthModule
+  ],
   controllers: [GamesController],
-  providers: [GamesService],
+  providers: [GamesService]
 })
-export class GamesModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-      consumer.apply(AuthMiddleware).forRoutes(GamesController);
-  }
-}
+export class GamesModule { }

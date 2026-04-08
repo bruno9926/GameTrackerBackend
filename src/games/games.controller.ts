@@ -7,14 +7,19 @@ import {
   Post,
   Put,
   Req,
-  UnauthorizedException
+  UnauthorizedException,
+  UseGuards
 } from '@nestjs/common';
 import { GamesService } from './games.service';
-
-import { CreateGameDto, UpdateGameDto } from './games-dto';
+// decorators
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+// guards
+import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { CreateGameDto, UpdateGameDto } from './games-dto';
+
 
 @Controller('games')
+@UseGuards(AuthGuard)
 export class GamesController {
   constructor(private gamesService: GamesService) {}
 
