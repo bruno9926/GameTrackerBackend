@@ -7,6 +7,7 @@ import { IsPublic } from "./decorators/is-public.decorator";
 import { AuthGuard } from "./guards/auth.guard";
 //dtos
 import { RegisterDto, LogInDto } from "./dtos";
+import RefreshDto from "./dtos/refresh.dto";
 
 @Controller('auth')
 @UseGuards(AuthGuard)
@@ -28,6 +29,12 @@ export class AuthController {
     @Get('me')
     me(@CurrentUser("id") userId: string) {
         return this.authService.getUser(userId);
+    }
+
+    @IsPublic()
+    @Post('refresh')
+    refresh(@Body() refreshInput: RefreshDto) {
+        return this.authService.refreshToken(refreshInput.refreshToken);
     }
 
     @Post('logout')

@@ -1,13 +1,13 @@
-import { Injectable } from "@nestjs/common";
-import { LogInDto, RegisterDto } from "../dtos";
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { LogInDto, RegisterDto, RefreshDto } from "../dtos";
 import { PasswordService } from "./password.service";
 import { UsersService } from "../../users/users.service";
 import { JwtService } from "@nestjs/jwt";
 
-import { BadRequestException } from "@nestjs/common";
 // entities
 import { User } from "../../users/entities";
 
+type JwtPayload = { id: string };
 @Injectable()
 export class AuthService {
     constructor(
@@ -49,6 +49,7 @@ export class AuthService {
         const { password, ...userPublicData } = user;
         return {
             token: await this.createToken(user),
+            refreshToken: await this.createRefreshToken(user),
             user: userPublicData
         }
     }
@@ -57,9 +58,39 @@ export class AuthService {
         return this.usersService.getUserById(id);
     }
 
+    async refreshToken(refreshToken: string) {
+        try {
+            const payload: JwtPayload = await this.jwtService.verifyAsync(refreshToken, {
+                secret: process.env.JWT_REFRESH_SECRET
+            });
+
+            const user = await this.usersService.getUserById(payload.id);
+            if (!user) {
+                throw new BadRequestException("Invalid refresh token")
+            }
+            return {
+                token: await this.createToken(user),
+                refreshToken: await this.createRefreshToken(user)
+            }
+        } catch {
+            throw new BadRequestException("Invalid or expired refresh token");
+        }
+    }
+
+    // utility methods
+
     private async createToken(user: User): Promise<string> {
-        return this.jwtService.signAsync({
+        return this.jwtService.signAsync<JwtPayload>({
             id: user.id
+        })
+    }
+
+    private async createRefreshToken(user: User): Promise<string> {
+        return this.jwtService.signAsync<JwtPayload>({
+            id: user.id
+        }, {
+            expiresIn: "7d",
+            secret: process.env.JWT_REFRESH_SECRET
         })
     }
 
