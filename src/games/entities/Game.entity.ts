@@ -12,15 +12,18 @@ type GameStatusType = typeof GameStatus[keyof typeof GameStatus]
 
 @Entity()
 export default class Game {
-    @PrimaryGeneratedColumn('uuid')
-    id: string | number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string | number;
 
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @Column({ default: GameStatus.PLAYING, type: 'enum', enum: GameStatus })
-    status : GameStatusType
+  @Column({ default: GameStatus.PLAYING, type: 'enum', enum: GameStatus })
+  status: GameStatusType
 
-    @ManyToOne(() => User, user => user.id, { nullable: true})
-    user?: User;
+  @Column({ nullable: true })
+  coverUrl?: string;
+
+  @ManyToOne(() => User, user => user.id, { nullable: true })
+  user?: User;
 }
