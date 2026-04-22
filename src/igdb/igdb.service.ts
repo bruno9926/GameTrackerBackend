@@ -10,8 +10,9 @@ export class IGDBService {
 
   private accessToken: string | null = null;
   private expiresAt: number | null = null;
+  private API: string = process.env.IGDB_API;
 
-  async getAccessToken() {
+  async getAccessToken(): Promise<string> {
     if (this.accessToken && !this.tokenHasExpired()) {
       return this.accessToken;
     }
@@ -49,6 +50,7 @@ export class IGDBService {
       const response = await fetch(url, { method: "POST" });
 
       if (!response.ok) {
+        console.log(response.statusText)
         throw new InternalServerErrorException("IGDB auth failed");
       }
 
@@ -57,7 +59,37 @@ export class IGDBService {
       throw new InternalServerErrorException((e as Error)?.message || JSON.stringify(e));
     }
   }
+
+  async search(searchString: string) {
+    const accessToken = await this.getAccessToken();
+    const client_id = process.env.TWITCH_CLIENT_ID;
+
+    if (!accessToken) {
+      throw new InternalServerErrorException("Could not be authenticated with IGDB");
+    }
+
+    try {
+      const safeSearch = searchString.replace(/"/g, '');
+      const response = await fetch(
+        `${this.API}/games`,
+        {
+          method: "POST",
+          body: `fields name,cover.image_id;search "${safeSearch}";`,
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Client-ID": client_id,
+            "Content-Type": "text/plain"
+          }
+        }
+      )
+
+      if (!response.ok) {
+        throw new InternalServerErrorException("IGDB request failed");
+      }
+
+      return response.json();
+    } catch (e: unknown) {
+      throw new InternalServerErrorException((e as Error)?.message || JSON.stringify(e));
+    }
+  }
 }
-
-
-
