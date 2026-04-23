@@ -15,6 +15,9 @@ export default class Game {
   @PrimaryGeneratedColumn('uuid')
   id: string | number;
 
+  @Column({ nullable: true })
+  gameTitleId: string;
+
   @Column()
   name: string;
 

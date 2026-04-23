@@ -6,18 +6,20 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const initialGames: Game[] = [
-  { id: uuid(), name: 'Hollow Knight: Silksong', status: 'playing' },
-  { id: uuid(), name: 'Final Fantasy 7 Rebirth', status: 'completed' },
-  { id: uuid(), name: 'Yakuza 0', status: 'paused' },
+  { id: uuid(), name: 'Hollow Knight: Silksong', status: 'playing', gameTitleId: null },
+  { id: uuid(), name: 'Final Fantasy 7 Rebirth', status: 'completed', gameTitleId: null },
+  { id: uuid(), name: 'Yakuza 0', status: 'paused', gameTitleId: null },
   {
     id: uuid(),
     name: 'The Legend of Zelda: Echoes of Wisdom',
     status: 'paused',
+    gameTitleId: null
   },
   {
     id: uuid(),
     name: 'Metal Gear Solid Delta: Snake Eater',
     status: 'playing',
+    gameTitleId: null
   },
 ];
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import Game from './entities/Game.entity';
 import type CreateGameDto from './games-dto/create-game.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,7 +10,7 @@ export class GamesService {
   constructor(
     @InjectRepository(Game)
     private readonly gameRepository: Repository<Game>,
-  ) {}
+  ) { }
 
   async getGames(userId: string): Promise<Game[]> {
     return await this.gameRepository.find({
@@ -22,7 +22,24 @@ export class GamesService {
     });
   }
 
+  private async gameAlreadyCreated(userId: string, gameTitleId: string): Promise<boolean> {
+    const game = await this.gameRepository.findOne({
+      where: {
+        user: { id: userId },
+        gameTitleId
+      }
+    })
+    return !!game;
+  }
+
   async createGame(userId: string, gameInput: CreateGameDto): Promise<Game[]> {
+    const alreadyCreated = await this.gameAlreadyCreated(userId, gameInput.gameTitleId);
+    if (alreadyCreated) {
+      throw new ConflictException({
+        message: 'Game already exists for this user',
+        code: 'GAME_ALREADY_EXISTS',
+      });
+    }
     const game = this.gameRepository.create({ ...gameInput, user: { id: userId } });
     await this.gameRepository.save(game);
     return this.getGames(userId);

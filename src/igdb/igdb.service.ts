@@ -1,4 +1,5 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import IgdbGameAdapter, { IGDBGame } from "./adapters/igdb.adapter";
 
 type TwitchAuthResponse = {
   access_token: string;
@@ -50,7 +51,6 @@ export class IGDBService {
       const response = await fetch(url, { method: "POST" });
 
       if (!response.ok) {
-        console.log(response.statusText)
         throw new InternalServerErrorException("IGDB auth failed");
       }
 
@@ -87,7 +87,9 @@ export class IGDBService {
         throw new InternalServerErrorException("IGDB request failed");
       }
 
-      return response.json();
+      const data: IGDBGame[] = await response.json();
+      return IgdbGameAdapter.toGameTitles(data);
+
     } catch (e: unknown) {
       throw new InternalServerErrorException((e as Error)?.message || JSON.stringify(e));
     }
