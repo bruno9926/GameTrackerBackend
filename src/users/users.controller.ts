@@ -7,6 +7,8 @@ import {
   UseGuards
 } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { CurrentUser } from 'src/security/decorators/current-user.decorator';
+import { UpdateUserDto } from './dtos';
 // guards
 import { AuthGuard } from 'src/security/guards/auth.guard';
 
@@ -18,7 +20,10 @@ export class UsersController {
   ) {}
 
   @Patch('me')
-  async updateUserInfo() {
-    return "hello";
+  async updateUserInfo(
+    @CurrentUser("id") userId: string,
+    @Body() userInfo: UpdateUserDto
+  ) {
+    return this.usersService.updateUserInfo(userId, userInfo);
   }
 }
