@@ -1,10 +1,10 @@
 import { Body, Post, Controller, Get, UseGuards } from "@nestjs/common";
 import { AuthService } from "./services/auth.service";
 //decorators
-import { CurrentUser } from "./decorators/current-user.decorator";
-import { IsPublic } from "./decorators/is-public.decorator";
+import { CurrentUser } from "../security/decorators/current-user.decorator";
+import { IsPublic } from "../security/decorators/is-public.decorator";
 //guards
-import { AuthGuard } from "./guards/auth.guard";
+import { AuthGuard } from "../security/guards/auth.guard";
 //dtos
 import { RegisterDto, LogInDto } from "./dtos";
 import RefreshDto from "./dtos/refresh.dto";

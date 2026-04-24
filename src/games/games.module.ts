@@ -3,13 +3,13 @@ import { GamesController } from './games.controller';
 import { GamesService } from './games.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import Game from './entities/Game.entity';
-import { AuthModule } from 'src/auth/auth.module';
 import { IGDBModule } from 'src/igdb/igdb.module';
+import { SecurityModule } from 'src/security/security.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Game]),
-    AuthModule,
+    SecurityModule,
     IGDBModule
   ],
   controllers: [GamesController],
