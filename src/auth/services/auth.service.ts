@@ -99,7 +99,7 @@ export class AuthService {
 
         const user = new User();
         user.name = registerInput.name;
-        user.username = registerInput.username;
+        user.username = registerInput.username.toLowerCase();
         user.email = registerInput.email;
         user.password = hashedPassword;
         return user;
