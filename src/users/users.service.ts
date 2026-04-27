@@ -1,14 +1,16 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "./entities";
 import { Repository } from "typeorm";
-import { UpdateUserDto } from "./dtos";
+import { UpdatePasswordDto, UpdateUserDto } from "./dtos";
+import { PasswordService } from "src/security/services/password.service";
 
 @Injectable()
 export class UsersService {
     constructor(
         @InjectRepository(User)
-        private readonly userRepository: Repository<User>
+        private readonly userRepository: Repository<User>,
+        private readonly passwordService: PasswordService
     ) { }
 
     async insertUser(userData: Partial<User>): Promise<User> {
@@ -56,6 +58,41 @@ export class UsersService {
             });
         }
         return this.userRepository.save(user);
+    }
+
+    async updatePassword(updatePassword: UpdatePasswordDto, userId: string) {
+        const { currentPassword, newPassword } = updatePassword;
+        if (currentPassword === newPassword) {
+            throw new BadRequestException({
+                message: "New password must be different"
+            });
+        }
+
+        const queryBuilder = this.userRepository
+            .createQueryBuilder("user")
+            .where("user.id = :userId", { userId })
+            .addSelect("user.password");
+
+        const user = await queryBuilder.getOne();
+        if (!user) {
+            throw new BadRequestException({
+                message: "Invalid user"
+            });
+        }
+
+        const isPasswordValid = await this.passwordService.comparePassword(currentPassword, user.password);
+        if (!isPasswordValid) {
+            throw new BadRequestException({
+                message: "Invalid credentials"
+            });
+        }
+
+        const newPasswordHashed = await this.passwordService.hashPassword(newPassword);
+        await this.userRepository.update(userId, {
+            password: newPasswordHashed
+        })
+
+        return { success: true }
     }
 }
 

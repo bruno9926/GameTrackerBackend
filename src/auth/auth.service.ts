@@ -1,11 +1,11 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
-import { LogInDto, RegisterDto, RefreshDto } from "../dtos";
-import { PasswordService } from "./password.service";
-import { UsersService } from "../../users/users.service";
+import { LogInDto, RegisterDto, RefreshDto } from "./dtos";
+import { PasswordService } from "../security/services/password.service";
+import { UsersService } from "../users/users.service";
 import { JwtService } from "@nestjs/jwt";
 
 // entities
-import { User } from "../../users/entities";
+import { User } from "../users/entities";
 
 type JwtPayload = { id: string };
 @Injectable()
