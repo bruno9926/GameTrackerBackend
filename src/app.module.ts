@@ -9,7 +9,6 @@ import Game from './games/entities/Game.entity';
 import User from './users/entities/User.entity';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-import { IGDBModule } from './igdb/igdb.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
