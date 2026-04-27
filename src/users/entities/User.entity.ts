@@ -14,6 +14,9 @@ export default class User {
     @Column({ unique: true })
     email: string;
 
+    @Column({ nullable: true })
+    avatarUrl?: string | null;
+
     @Column({ select: false })
     password: string;
 }

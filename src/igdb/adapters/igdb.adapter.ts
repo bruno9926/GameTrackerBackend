@@ -3,18 +3,19 @@ import GameTitle from "src/games/entities/GameTitle.entity";
 export type IGDBGame = {
     id: string,
     name: string,
-    cover: {
+    cover?: {
         image_id?: string | null
     }
 }
 
 export default class IgdbGameAdapter {
     static toGameTitle(igdbGame: IGDBGame): GameTitle {
+        console.log(igdbGame)
         return {
             sourceId: String(igdbGame.id),
             source: 'igdb',
             name: igdbGame.name,
-            cover: igdbGame.cover.image_id
+            cover: igdbGame.cover?.image_id
                 ? IgdbGameAdapter.buildCoverUrl(igdbGame.cover.image_id)
                 : null,
         };
