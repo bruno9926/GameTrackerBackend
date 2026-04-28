@@ -4,13 +4,15 @@ import { User } from "./entities";
 import { Repository } from "typeorm";
 import { UpdatePasswordDto, UpdateUserDto } from "./dtos";
 import { PasswordService } from "src/security/services/password.service";
+import { SupabaseStorageService } from "./supabase.service";
 
 @Injectable()
 export class UsersService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
-        private readonly passwordService: PasswordService
+        private readonly passwordService: PasswordService,
+        private readonly storageService: SupabaseStorageService
     ) { }
 
     async insertUser(userData: Partial<User>): Promise<User> {
@@ -93,6 +95,15 @@ export class UsersService {
         })
 
         return { success: true }
+    }
+
+    async updateAvatar(file: Express.Multer.File, userId: string) {
+        if (!file.mimetype.startsWith('image/')) {
+            throw new BadRequestException('Invalid file type');
+        }
+
+        const publicUrl = await this.storageService.uploadAvatar(file, userId);
+        return this.updateUserInfo(userId, { avatarUrl: publicUrl });
     }
 }
 

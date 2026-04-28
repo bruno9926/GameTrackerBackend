@@ -15,4 +15,9 @@ export class UpdateUserDto {
   @IsEmail()
   @IsNotEmpty()
   email?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  avatarUrl?: string;
 }

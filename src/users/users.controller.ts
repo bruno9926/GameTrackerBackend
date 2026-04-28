@@ -5,11 +5,14 @@ import {
   Post,
   Query,
   UnauthorizedException,
-  UseGuards
+  UploadedFile,
+  UseGuards,
+  UseInterceptors
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 import { UpdatePasswordDto, UpdateUserDto } from './dtos';
+import { FileInterceptor } from '@nestjs/platform-express';
 // guards
 import { AuthGuard } from 'src/security/guards/auth.guard';
 
@@ -18,7 +21,7 @@ import { AuthGuard } from 'src/security/guards/auth.guard';
 export class UsersController {
   constructor(
     private usersService: UsersService
-  ) {}
+  ) { }
 
   @Patch('me')
   async updateUserInfo(
@@ -34,5 +37,14 @@ export class UsersController {
     @Body() passwordChange: UpdatePasswordDto
   ) {
     return this.usersService.updatePassword(passwordChange, userId);
+  }
+
+  @Post('avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  async updateAvatar(
+    @CurrentUser("id") userId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.usersService.updateAvatar(file, userId);
   }
 }
