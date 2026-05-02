@@ -10,6 +10,8 @@ import User from './users/entities/User.entity';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { FriendsModule } from './friends/friends.module';
+import Friendship from './friends/entities/Friendship.entity';
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { UsersModule } from './users/users.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [Game, User],
+      entities: [Game, User, Friendship],
       synchronize: true,
       ssl: process.env.POSTGRES_SSL === 'true',
       extra: {
@@ -38,7 +40,8 @@ import { UsersModule } from './users/users.module';
     }),
     UsersModule,
     GamesModule,
-    AuthModule
+    AuthModule,
+    FriendsModule
   ],
   controllers: [AppController],
   providers: [AppService],
