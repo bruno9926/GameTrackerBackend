@@ -19,4 +19,7 @@ export default class User {
 
     @Column({ select: false })
     password: string;
+
+    @Column({ unique: true , nullable: true})
+    friendCode: string | null;
 }
