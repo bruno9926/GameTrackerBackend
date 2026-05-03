@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { FriendsService } from './friends.service';
+import { SendRequestDto } from './dtos';
 import { AuthGuard } from 'src/security/guards/auth.guard';
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 
@@ -11,6 +12,11 @@ export class FriendsController {
   @Get()
   getFriends(@CurrentUser("id") userId) {
     return this.friendsService.getFriends(userId);
+  }
+
+  @Post('requests')
+  sendRequest(@CurrentUser("id") userId, @Body() { receiverId }: SendRequestDto) {
+    return this.friendsService.sendRequest(userId, receiverId);
   }
 
   @Get('requests')

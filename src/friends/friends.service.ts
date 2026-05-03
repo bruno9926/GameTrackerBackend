@@ -15,6 +15,25 @@ export class FriendsService {
         private readonly dataSource: DataSource
     ) { }
 
+    async sendRequest(senderId: string, receiverId: string): Promise<void> {
+        if (senderId === receiverId)
+            throw new BadRequestException('Cannot send a friend request to yourself');
+
+        if (await this.areFriends(senderId, receiverId))
+            throw new BadRequestException('Already friends');
+
+        // check there are no friend requests in either direction
+        const existing = await this.friendRequestRepository.findOne({
+            where: [
+                { senderId, receiverId, status: FriendRequestStatus.PENDING },
+                { senderId: receiverId, receiverId: senderId, status: FriendRequestStatus.PENDING },
+            ],
+        });
+        if (existing) throw new BadRequestException('Friend request already pending');
+
+        await this.friendRequestRepository.save({ senderId, receiverId, status: FriendRequestStatus.PENDING });
+    }
+
     async getRequests(userId: string): Promise<FriendRequest[]> {
         return this.friendRequestRepository.find({
             where: { receiverId: userId, status: FriendRequestStatus.PENDING },
@@ -51,13 +70,12 @@ export class FriendsService {
     }
 
     private async areFriends(userAId: string, userBId: string): Promise<boolean> {
-        const friendship = await this.friendshipRepository.findOne({
+        return this.friendshipRepository.exists({
             where: [
                 { user1Id: userAId, user2Id: userBId },
                 { user1Id: userBId, user2Id: userAId }
             ],
         });
-        return !!friendship;
     }
 
     async getFriends(userId: string): Promise<User[]> {
