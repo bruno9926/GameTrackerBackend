@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import Friendship from './entities/Friendship.entity';
+import FriendRequest, { FriendRequestStatus } from './entities/FriendRequest.entity';
 import User from 'src/users/entities/User.entity';
 
 @Injectable()
@@ -9,8 +10,55 @@ export class FriendsService {
     constructor(
         @InjectRepository(Friendship)
         private readonly friendshipRepository: Repository<Friendship>,
+        @InjectRepository(FriendRequest)
+        private readonly friendRequestRepository: Repository<FriendRequest>,
         private readonly dataSource: DataSource
     ) { }
+
+    async getRequests(userId: string): Promise<FriendRequest[]> {
+        return this.friendRequestRepository.find({
+            where: { receiverId: userId, status: FriendRequestStatus.PENDING },
+            relations: ['sender'],
+        });
+    }
+
+    async acceptRequest(requestId: string, userId: string): Promise<void> {
+        const request = await this.friendRequestRepository.findOne({
+            where: { id: requestId, receiverId: userId, status: FriendRequestStatus.PENDING },
+        });
+
+        if (!request) throw new NotFoundException('Friend request not found');
+
+        if (await this.areFriends(request.senderId, userId))
+            throw new BadRequestException('Already friends');
+
+        // the user1Id should be lower than user2Id to avoid hitting the table check
+        const [user1Id, user2Id] = [request.senderId, userId].sort();
+
+        await this.dataSource.transaction(async manager => {
+            await manager.save(Friendship, { user1Id, user2Id });
+            await manager.update(FriendRequest, requestId, { status: FriendRequestStatus.ACCEPTED });
+        });
+    }
+
+    async rejectRequest(requestId: string, userId: string): Promise<void> {
+        const result = await this.friendRequestRepository.update(
+            { id: requestId, receiverId: userId, status: FriendRequestStatus.PENDING },
+            { status: FriendRequestStatus.REJECTED },
+        );
+
+        if (result.affected === 0) throw new NotFoundException('Friend request not found');
+    }
+
+    private async areFriends(userAId: string, userBId: string): Promise<boolean> {
+        const friendship = await this.friendshipRepository.findOne({
+            where: [
+                { user1Id: userAId, user2Id: userBId },
+                { user1Id: userBId, user2Id: userAId }
+            ],
+        });
+        return !!friendship;
+    }
 
     async getFriends(userId: string): Promise<User[]> {
         return this.dataSource

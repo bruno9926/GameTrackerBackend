@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { FriendsModule } from './friends/friends.module';
 import Friendship from './friends/entities/Friendship.entity';
+import FriendRequest from './friends/entities/FriendRequest.entity';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import Friendship from './friends/entities/Friendship.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [Game, User, Friendship],
+      entities: [Game, User, Friendship, FriendRequest],
       synchronize: true,
       ssl: process.env.POSTGRES_SSL === 'true',
       extra: {
