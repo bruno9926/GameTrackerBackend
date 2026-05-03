@@ -1,3 +1,4 @@
+import User from "../../users/entities/User.entity";
 import {
   Column,
   Entity,
@@ -8,7 +9,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { User } from "src/users/entities";
 
 export const FriendRequestStatus = {
   PENDING: "pending",
