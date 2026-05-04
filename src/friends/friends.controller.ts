@@ -15,8 +15,8 @@ export class FriendsController {
   }
 
   @Post('requests')
-  sendRequest(@CurrentUser("id") userId, @Body() { receiverId }: SendRequestDto) {
-    return this.friendsService.sendRequest(userId, receiverId);
+  sendRequest(@CurrentUser("id") userId, @Body() { friendCode }: SendRequestDto) {
+    return this.friendsService.sendRequest(userId, friendCode);
   }
 
   @Get('requests')

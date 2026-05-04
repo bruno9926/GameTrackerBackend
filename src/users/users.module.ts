@@ -14,6 +14,6 @@ import { SupabaseStorageService } from './supabase.service';
     ],
     controllers: [UsersController],
     providers: [UsersService, SupabaseStorageService, FriendCodeService],
-    exports: [UsersService]
+    exports: [UsersService, FriendCodeService]
 })
 export class UsersModule {}
