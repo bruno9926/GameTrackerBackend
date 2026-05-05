@@ -27,6 +27,6 @@ export default class Game {
   @Column({ nullable: true })
   coverUrl?: string;
 
-  @ManyToOne(() => User, user => user.id, { nullable: true })
+  @ManyToOne(() => User, user => user.games, { onDelete: 'CASCADE' })
   user?: User;
 }

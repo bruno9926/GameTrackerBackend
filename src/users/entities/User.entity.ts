@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import Game from "src/games/entities/Game.entity";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export default class User {
@@ -22,4 +23,7 @@ export default class User {
 
     @Column({ unique: true })
     friendCode: string;
+
+    @OneToMany(() => Game, game => game.user)
+    games: Game[];
 }
