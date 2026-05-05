@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { FriendsService } from './friends.service';
 import { SendRequestDto } from './dtos';
 import { AuthGuard } from 'src/security/guards/auth.guard';
@@ -32,5 +32,10 @@ export class FriendsController {
   @Patch('requests/:id/reject')
   rejectRequest(@Param('id') id: string, @CurrentUser("id") userId) {
     return this.friendsService.rejectRequest(id, userId);
+  }
+
+  @Delete(':id')
+  removeFriend(@Param('id') friendId: string, @CurrentUser("id") userId) {
+    return this.friendsService.removeFriend(userId, friendId);
   }
 }
