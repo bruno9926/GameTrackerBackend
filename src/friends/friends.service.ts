@@ -91,6 +91,7 @@ export class FriendsService {
 
         return this.dataSource
             .createQueryBuilder(User, 'u')
+            .leftJoinAndSelect("u.games", "games")
             .where('u.id = :friendId', { friendId })
             .getOne();
     }
@@ -100,7 +101,7 @@ export class FriendsService {
             throw new NotFoundException('Friendship not found');    
         }
         const [user1Id, user2Id] = [userId, friendId].sort();
-        const result = await this.friendshipRepository.delete({ user1Id, user2Id });
+        await this.friendshipRepository.delete({ user1Id, user2Id });
     }
 
     async getFriends(userId: string): Promise<User[]> {
