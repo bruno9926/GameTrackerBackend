@@ -85,6 +85,16 @@ export class FriendsService {
         });
     }
 
+    async getFriend(userId: string, friendId: string): Promise<User> {
+        if (!await this.areFriends(userId, friendId))
+            throw new NotFoundException('Friendship not found');
+
+        return this.dataSource
+            .createQueryBuilder(User, 'u')
+            .where('u.id = :friendId', { friendId })
+            .getOne();
+    }
+
     async removeFriend(userId: string, friendId: string): Promise<void> {
         if (!await this.areFriends(userId, friendId)) {
             throw new NotFoundException('Friendship not found');    
