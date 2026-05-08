@@ -59,4 +59,9 @@ export class GamesController {
   searchTitle(@Query('q') searchString: string) {
     return this.igdbService.search(searchString);
   }
+
+  @Get('/gotw')
+  getGameOfTheWeek(@CurrentUser("id") userId: string) {
+    return this.gamesService.getGameOfTheWeek(userId);
+  }
 }
