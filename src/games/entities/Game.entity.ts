@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from "typeorm";
 import User from "../../users/entities/User.entity";
 
 export const GameStatus = {
@@ -29,4 +29,10 @@ export default class Game {
 
   @ManyToOne(() => User, user => user.games, { onDelete: 'CASCADE' })
   user?: User;
+
+  @CreateDateColumn()
+  createdAt?: Date;
+
+  @UpdateDateColumn()
+  updatedAt?: Date;
 }
