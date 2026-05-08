@@ -115,4 +115,18 @@ export class FriendsService {
         .setParameter('userId', userId)
         .getMany();
     }
+
+    async countFriendsPlayingGameTitle(userId: string, gameTitleId: string): Promise<number> {
+        return this.dataSource
+            .createQueryBuilder(User, 'u')
+            .innerJoin(Friendship, 'f', `
+                (f.user1Id = :userId AND f.user2Id = u.id)
+                OR
+                (f.user2Id = :userId AND f.user1Id = u.id)
+            `)
+            .innerJoin('u.games', 'g', 'g.gameTitleId = :gameTitleId')
+            .setParameter('userId', userId)
+            .setParameter('gameTitleId', gameTitleId)
+            .getCount();
+    }
 }
