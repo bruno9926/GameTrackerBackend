@@ -10,7 +10,6 @@ export type IGDBGame = {
 
 export default class IgdbGameAdapter {
     static toGameTitle(igdbGame: IGDBGame): GameTitle {
-        console.log(igdbGame)
         return {
             sourceId: String(igdbGame.id),
             source: 'igdb',
@@ -27,5 +26,9 @@ export default class IgdbGameAdapter {
 
     private static buildCoverUrl(imageId: string) {
         return `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg`
+    }
+
+    static buildImageUrl(imageId: string): string {
+        return `https://images.igdb.com/igdb/image/upload/t_1080p_2x/${imageId}.jpg`;
     }
 }

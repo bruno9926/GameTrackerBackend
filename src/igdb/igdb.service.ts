@@ -94,4 +94,46 @@ export class IGDBService {
       throw new InternalServerErrorException((e as Error)?.message || JSON.stringify(e));
     }
   }
+
+  async getArtworkUrl(gameId: string): Promise<string | null> {
+    return this.fetchRandomImageUrl(
+      `${this.API}/artworks`,
+      `fields image_id; where game = ${gameId} & artwork_type != (5,6,7); limit 10;`
+    );
+  }
+
+  async getScreenshotUrl(gameId: string): Promise<string | null> {
+    return this.fetchRandomImageUrl(
+      `${this.API}/screenshots`,
+      `fields image_id; where game = ${gameId}; limit 10;`
+    );
+  }
+
+  private async fetchRandomImageUrl(endpoint: string, query: string): Promise<string | null> {
+    const accessToken = await this.getAccessToken();
+    const client_id = process.env.TWITCH_CLIENT_ID;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: query,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Client-ID': client_id,
+          'Content-Type': 'text/plain',
+        },
+      });
+
+      if (!response.ok) throw new InternalServerErrorException('IGDB request failed');
+
+      const data: { image_id: string }[] = await response.json();
+      if (!data.length) return null;
+
+      const pick = data[Math.floor(Math.random() * data.length)];
+      return IgdbGameAdapter.buildImageUrl(pick.image_id);
+
+    } catch (e: unknown) {
+      throw new InternalServerErrorException((e as Error)?.message || JSON.stringify(e));
+    }
+  }
 }

@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateGameDto } from './games-dto';
 import { FriendsService } from 'src/friends/friends.service';
+import { IGDBService } from 'src/igdb/igdb.service';
 
 @Injectable()
 export class GamesService {
@@ -13,6 +14,7 @@ export class GamesService {
     @InjectRepository(Game)
     private readonly gameRepository: Repository<Game>,
     private readonly friendsService: FriendsService,
+    private readonly igdbService: IGDBService,
   ) { }
 
   async getGames(userId: string): Promise<Game[]> {
@@ -81,13 +83,26 @@ export class GamesService {
     });
 
     const friendsPlaying = await this.friendsService.countFriendsPlayingGameTitle(userId, topGame.gameTitleId);
+    const coverUrl = await this.fetchCoverUrl(topGame.gameTitleId);
 
     return {
       gameTitleId: topGame.gameTitleId,
       name: topGame.name,
-      coverUrl: 'https://images.igdb.com/igdb/image/upload/t_1080p/ar4sz.webp',
+      coverUrl,
       usersPlaying,
       friendsPlaying,
     };
+  }
+
+  private async fetchCoverUrl(gameTitleId: string | null): Promise<string | null> {
+    if (!gameTitleId) return null;
+    // fetch both in parallel and pick randomly for variety
+    const [artwork, screenshot] = await Promise.all([
+      this.igdbService.getArtworkUrl(gameTitleId),
+      this.igdbService.getScreenshotUrl(gameTitleId),
+    ]);
+    const options = [artwork, screenshot].filter(Boolean);
+    if (!options.length) return null;
+    return options[Math.floor(Math.random() * options.length)];
   }
 }
