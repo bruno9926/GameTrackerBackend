@@ -4,7 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import Friendship from './entities/Friendship.entity';
 import FriendRequest, { FriendRequestStatus } from './entities/FriendRequest.entity';
 import User from 'src/users/entities/User.entity';
-import { FriendCodeService } from 'src/users/friend-code.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class FriendsService {
@@ -14,11 +14,11 @@ export class FriendsService {
         @InjectRepository(FriendRequest)
         private readonly friendRequestRepository: Repository<FriendRequest>,
         private readonly dataSource: DataSource,
-        private readonly friendCodeService: FriendCodeService
+        private readonly usersService: UsersService
     ) { }
 
     async sendRequest(senderId: string, friendCode: string): Promise<void> {
-        const receiver = await this.friendCodeService.getUserByFriendCode(friendCode);
+        const receiver = await this.usersService.getUserByFriendCode(friendCode);
         if (!receiver) throw new NotFoundException('User not found');
 
         const receiverId = receiver.id;

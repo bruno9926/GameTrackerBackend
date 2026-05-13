@@ -5,7 +5,7 @@ import { Repository } from "typeorm";
 import { UpdatePasswordDto, UpdateUserDto } from "./dtos";
 import { PasswordService } from "src/security/services/password.service";
 import { SupabaseStorageService } from "./supabase.service";
-import { FriendCodeService } from "./friend-code.service";
+import { generateFriendCode } from "src/utils/friend-code.util";
 
 @Injectable()
 export class UsersService {
@@ -14,15 +14,18 @@ export class UsersService {
         private readonly userRepository: Repository<User>,
         private readonly passwordService: PasswordService,
         private readonly storageService: SupabaseStorageService,
-        private readonly friendCodeService: FriendCodeService
     ) { }
 
     async insertUser(userData: Partial<User>): Promise<User> {
         const user = this.userRepository.create({
             ...userData,
-            friendCode: this.friendCodeService.generate(),
+            friendCode: generateFriendCode(),
         });
         return await this.userRepository.save(user);
+    }
+
+    async getUserByFriendCode(friendCode: string): Promise<User | null> {
+        return this.userRepository.findOne({ where: { friendCode } });
     }
 
     async userExists(email: string): Promise<boolean> {
