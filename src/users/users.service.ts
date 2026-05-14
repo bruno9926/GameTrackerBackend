@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "./entities";
+import { UserStatusType } from "./entities/User.entity";
 import { Repository } from "typeorm";
 import { UpdatePasswordDto, UpdateUserDto } from "./dtos";
 import { PasswordService } from "src/security/services/password.service";
@@ -103,6 +104,10 @@ export class UsersService {
         })
 
         return { success: true }
+    }
+
+    async setStatus(userId: string, status: UserStatusType): Promise<void> {
+        await this.userRepository.update(userId, { status });
     }
 
     async updateAvatar(file: Express.Multer.File, userId: string) {

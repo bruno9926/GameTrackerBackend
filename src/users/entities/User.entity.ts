@@ -1,10 +1,20 @@
 import Game from "src/games/entities/Game.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
+export const UserStatus = {
+    online: "online",
+    offline: "offline",
+    busy: "busy"
+} as const
+
+export type UserStatusType = typeof UserStatus[keyof typeof UserStatus];
 @Entity()
 export default class User {
     @PrimaryGeneratedColumn('uuid')
     id: string;
+
+    @Column({ default: UserStatus.offline, type: 'enum', enum: UserStatus })
+    status: UserStatusType;
 
     @Column()
     name: string;
