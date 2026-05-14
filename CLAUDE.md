@@ -37,6 +37,7 @@ The app loads `.env.development` (or `.env.<NODE_ENV>`) then falls back to `.env
 | `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`, `TWITCH_AUTH_API` | IGDB OAuth via Twitch |
 | `IGDB_API` | IGDB base API URL |
 | `SUPABASE_PROJECT_URL`, `SUPABASE_SERVICE_KEY` | Supabase Storage for avatar uploads |
+| `FRONTEND_URL` | Allowed CORS origin for the Socket.IO gateway (e.g. `http://localhost:5173` in dev, production domain in prod) |
 
 ## Architecture
 
@@ -48,7 +49,9 @@ This is a NestJS REST API for a game-tracking social app. TypeORM is used with P
 - **SecurityModule** — Houses `JwtModule`, `AuthGuard`, and `PasswordService`. Exported so other modules can use JWT and the guard. `AuthGuard` is applied globally and checks for `@IsPublic()` decorator to skip auth.
 - **UsersModule** — CRUD for the `User` entity, password changes, and avatar uploads (via Supabase Storage). Each user gets a unique `friendCode` generated on registration.
 - **GamesModule** — Per-user game library. Games have a status enum (`playing`, `completed`, `wishlist`, `paused`) and an optional `gameTitleId` linking to IGDB.
-- **FriendsModule** — Friend request flow (send by friend code → accept/reject) and friendship management. The `Friendship` table enforces `user1Id < user2Id` via DB CHECK constraints to prevent duplicate pairs.
+- **FriendsModule** — Friend request flow (send by friend code → accept/reject) and friendship management. The `Friendship` table enforces `user1Id < user2Id` via DB CHECK constraints to prevent duplicate pairs. `FriendsService` enriches `getFriends`/`getFriend` responses with live presence status from `PresenceService`.
+- **PresenceModule** — Standalone infrastructure module. `PresenceService` tracks active socket connections per user in an in-memory map. Exposes `setOnline`, `setOffline`, `isOnline`, `getStatus`, `getStatuses`, and `getSockets`. No imports from other feature modules — consumers import this module.
+- **EventsModule** — WebSocket gateway (`/status` namespace). Authenticates via JWT on handshake, delegates connection tracking to `PresenceService`, and emits `friend:status` events to a user's friends on first connect / last disconnect.
 - **IgdbModule** — Searches the IGDB API for game titles. Manages a cached Twitch OAuth token (auto-refreshed 5s before expiry).
 
 ### Auth flow

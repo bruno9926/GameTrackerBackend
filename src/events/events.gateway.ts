@@ -12,7 +12,7 @@ import { PresenceService, PresenceStatus } from "src/presence/presence.service";
 @WebSocketGateway({
     namespace: 'status',
     cors: {
-        origin: 'http://localhost:5173', // El origen de tu frontend (Vite/React)
+        origin: process.env.FRONTEND_URL,
         methods: ['GET', 'POST'],
         credentials: true,
     },
