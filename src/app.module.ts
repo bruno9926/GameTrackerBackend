@@ -14,6 +14,8 @@ import { FriendsModule } from './friends/friends.module';
 import Friendship from './friends/entities/Friendship.entity';
 import FriendRequest from './friends/entities/FriendRequest.entity';
 import { EventsModule } from './events/events.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import Notification from './notifications/entities/Notification.entity';
 
 @Module({
   imports: [
@@ -28,7 +30,7 @@ import { EventsModule } from './events/events.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [Game, User, Friendship, FriendRequest],
+      entities: [Game, User, Friendship, FriendRequest, Notification],
       synchronize: true,
       ssl: process.env.POSTGRES_SSL === 'true',
       extra: {
@@ -44,7 +46,8 @@ import { EventsModule } from './events/events.module';
     GamesModule,
     AuthModule,
     FriendsModule,
-    EventsModule
+    EventsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
