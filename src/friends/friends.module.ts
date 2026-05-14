@@ -6,10 +6,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import Friendship from './entities/Friendship.entity';
 import FriendRequest from './entities/FriendRequest.entity';
 import { UsersModule } from 'src/users/users.module';
-import { PresenceModule } from 'src/presence/presence.module';
+import { ConnectionRegistryModule } from 'src/connection-registry/connection-registry.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Friendship, FriendRequest]), SecurityModule, UsersModule, PresenceModule],
+  imports: [TypeOrmModule.forFeature([Friendship, FriendRequest]), SecurityModule, UsersModule, ConnectionRegistryModule],
   controllers: [FriendsController],
   providers: [FriendsService],
   exports: [FriendsService],

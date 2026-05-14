@@ -5,7 +5,7 @@ import Friendship from './entities/Friendship.entity';
 import FriendRequest, { FriendRequestStatus } from './entities/FriendRequest.entity';
 import User from 'src/users/entities/User.entity';
 import { UsersService } from 'src/users/users.service';
-import { PresenceService, PresenceStatus } from 'src/presence/presence.service';
+import { ConnectionRegistryService, PresenceStatus } from 'src/connection-registry/connection-registry.service';
 
 export type FriendResponse = User & { status: PresenceStatus };
 
@@ -18,7 +18,7 @@ export class FriendsService {
         private readonly friendRequestRepository: Repository<FriendRequest>,
         private readonly dataSource: DataSource,
         private readonly usersService: UsersService,
-        private readonly presenceService: PresenceService,
+        private readonly presenceService: ConnectionRegistryService,
     ) { }
 
     async sendRequest(senderId: string, friendCode: string): Promise<void> {

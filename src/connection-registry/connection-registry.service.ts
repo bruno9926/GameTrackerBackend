@@ -6,7 +6,7 @@ export enum PresenceStatus {
 }
 
 @Injectable()
-export class PresenceService {
+export class ConnectionRegistryService {
 
     private connectionMap: Record<string, Set<string>> = {};
 

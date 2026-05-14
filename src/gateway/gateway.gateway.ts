@@ -7,7 +7,7 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from 'socket.io';
 import { FriendsService } from "src/friends/friends.service";
-import { PresenceService, PresenceStatus } from "src/presence/presence.service";
+import { ConnectionRegistryService, PresenceStatus } from "src/connection-registry/connection-registry.service";
 
 @WebSocketGateway({
     namespace: 'status',
@@ -25,7 +25,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(
         private readonly jwtService: JwtService,
         private readonly friendsService: FriendsService,
-        private readonly presenceService: PresenceService,
+        private readonly presenceService: ConnectionRegistryService,
     ) { }
 
     async handleConnection(socket: Socket) {
