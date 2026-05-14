@@ -5,6 +5,9 @@ import Friendship from './entities/Friendship.entity';
 import FriendRequest, { FriendRequestStatus } from './entities/FriendRequest.entity';
 import User from 'src/users/entities/User.entity';
 import { UsersService } from 'src/users/users.service';
+import { PresenceService, PresenceStatus } from 'src/presence/presence.service';
+
+export type FriendResponse = User & { status: PresenceStatus };
 
 @Injectable()
 export class FriendsService {
@@ -14,7 +17,8 @@ export class FriendsService {
         @InjectRepository(FriendRequest)
         private readonly friendRequestRepository: Repository<FriendRequest>,
         private readonly dataSource: DataSource,
-        private readonly usersService: UsersService
+        private readonly usersService: UsersService,
+        private readonly presenceService: PresenceService,
     ) { }
 
     async sendRequest(senderId: string, friendCode: string): Promise<void> {
@@ -85,15 +89,17 @@ export class FriendsService {
         });
     }
 
-    async getFriend(userId: string, friendId: string): Promise<User> {
+    async getFriend(userId: string, friendId: string): Promise<FriendResponse> {
         if (!await this.areFriends(userId, friendId))
             throw new NotFoundException('Friendship not found');
 
-        return this.dataSource
+        const friend = await this.dataSource
             .createQueryBuilder(User, 'u')
             .leftJoinAndSelect("u.games", "games")
             .where('u.id = :friendId', { friendId })
             .getOne();
+
+        return { ...friend, status: this.presenceService.getStatus(friendId) };
     }
 
     async removeFriend(userId: string, friendId: string): Promise<void> {
@@ -104,16 +110,19 @@ export class FriendsService {
         await this.friendshipRepository.delete({ user1Id, user2Id });
     }
 
-    async getFriends(userId: string): Promise<User[]> {
-        return this.dataSource
-        .createQueryBuilder(User, 'u')
-        .innerJoin(Friendship, 'f', `
-            (f.user1Id = :userId AND f.user2Id = u.id)
-            OR
-            (f.user2Id = :userId AND f.user1Id = u.id)
-        `)
-        .setParameter('userId', userId)
-        .getMany();
+    async getFriends(userId: string): Promise<FriendResponse[]> {
+        const friends = await this.dataSource
+            .createQueryBuilder(User, 'u')
+            .innerJoin(Friendship, 'f', `
+                (f.user1Id = :userId AND f.user2Id = u.id)
+                OR
+                (f.user2Id = :userId AND f.user1Id = u.id)
+            `)
+            .setParameter('userId', userId)
+            .getMany();
+
+        const statuses = this.presenceService.getStatuses(friends.map(f => f.id));
+        return friends.map(friend => ({ ...friend, status: statuses[friend.id] }));
     }
 
     async countFriendsPlayingGameTitle(userId: string, gameTitleId: string): Promise<number> {

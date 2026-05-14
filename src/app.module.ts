@@ -13,7 +13,7 @@ import { UsersModule } from './users/users.module';
 import { FriendsModule } from './friends/friends.module';
 import Friendship from './friends/entities/Friendship.entity';
 import FriendRequest from './friends/entities/FriendRequest.entity';
-import { StatusModule } from './status/status.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -44,7 +44,7 @@ import { StatusModule } from './status/status.module';
     GamesModule,
     AuthModule,
     FriendsModule,
-    StatusModule
+    EventsModule
   ],
   controllers: [AppController],
   providers: [AppService],
