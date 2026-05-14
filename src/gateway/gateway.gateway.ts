@@ -17,7 +17,7 @@ import { PresenceService, PresenceStatus } from "src/presence/presence.service";
         credentials: true,
     },
 })
-export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     @WebSocketServer()
     server: Server;

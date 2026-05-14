@@ -13,7 +13,7 @@ import { UsersModule } from './users/users.module';
 import { FriendsModule } from './friends/friends.module';
 import Friendship from './friends/entities/Friendship.entity';
 import FriendRequest from './friends/entities/FriendRequest.entity';
-import { EventsModule } from './events/events.module';
+import { GatewayModule } from './gateway/gateway.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import Notification from './notifications/entities/Notification.entity';
 
@@ -46,7 +46,7 @@ import Notification from './notifications/entities/Notification.entity';
     GamesModule,
     AuthModule,
     FriendsModule,
-    EventsModule,
+    GatewayModule,
     NotificationsModule,
   ],
   controllers: [AppController],
