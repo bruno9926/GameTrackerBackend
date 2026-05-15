@@ -1,6 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { Server } from "socket.io";
+import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { ConnectionRegistryService, PresenceStatus } from "src/connection-registry/connection-registry.service";
+import ClientConnectedEvent from "src/events/client-connected.event";
+import ClientDisconnectedEvent from "src/events/client-disconnected.event";
+import FriendStatusChanged from "src/events/friend-status-changed.event";
 import { FriendsService } from "src/friends/friends.service";
 
 @Injectable()
@@ -9,38 +12,50 @@ export class PresenceService {
     constructor(
         private readonly connectionRegistry: ConnectionRegistryService,
         private readonly friendsService: FriendsService,
+        private readonly eventEmitter: EventEmitter2
     ) { }
 
-    async handleConnect(server: Server, userId: string, socketId: string): Promise<void> {
+    @OnEvent('client.connected')
+    async onClientConnected(payload: ClientConnectedEvent) {
+        const { userId, socketId } = payload;
         const wasOffline = !this.connectionRegistry.isOnline(userId);
         this.connectionRegistry.setOnline(userId, socketId);
+
         if (wasOffline) {
-            await this.emitToFriends(server, userId, {
-                type: "friend:status",
-                body: { userId, status: PresenceStatus.Online }
-            });
+            const friendsConnections = await this.getFriendsConnections(userId);
+            this.eventEmitter.emit(
+                "friend.status.changed",
+                new FriendStatusChanged(
+                    userId,
+                    PresenceStatus.Online,
+                    friendsConnections
+                )
+            )
         }
     }
 
-    async handleDisconnect(server: Server, userId: string, socketId: string): Promise<void> {
+    @OnEvent('client.disconnected')
+    async onClientDisconnected(payload: ClientDisconnectedEvent) {
+        const { userId, socketId } = payload;
+
         this.connectionRegistry.setOffline(userId, socketId);
         if (!this.connectionRegistry.isOnline(userId)) {
-            await this.emitToFriends(server, userId, {
-                type: "friend:status",
-                body: { userId, status: PresenceStatus.Offline }
-            });
+            const friendsConnections = await this.getFriendsConnections(userId);
+
+            this.eventEmitter.emit(
+                "friend.status.changed",
+                new FriendStatusChanged(
+                    userId,
+                    PresenceStatus.Offline,
+                    friendsConnections
+                )
+            )
         }
+
     }
 
-    emitTo(server: Server, userId: string, event: { type: string; body: unknown }): void {
-        const sockets = this.connectionRegistry.getSockets(userId);
-        sockets.forEach(socketId => {
-            server.to(socketId).emit(event.type, event.body);
-        });
-    }
-
-    private async emitToFriends(server: Server, userId: string, event: { type: string; body: unknown }): Promise<void> {
+    private async getFriendsConnections(userId: string): Promise<Set<string>> {
         const friends = await this.friendsService.getFriends(userId);
-        friends.forEach(friend => this.emitTo(server, friend.id, event));
+        return new Set(friends.map(f => f.id));
     }
 }

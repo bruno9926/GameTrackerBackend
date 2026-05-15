@@ -8,6 +8,10 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 
+export enum NotificationType {
+  FRIEND_REQUEST = "friend_request",
+}
+
 @Entity("notifications")
 export default class Notification {
   @PrimaryGeneratedColumn("uuid")
@@ -19,6 +23,9 @@ export default class Notification {
   @ManyToOne(() => User)
   @JoinColumn({ name: "userId" })
   user: User;
+
+  @Column({ type: "enum", enum: NotificationType })
+  type: NotificationType;
 
   @Column()
   title: string;

@@ -16,6 +16,7 @@ import FriendRequest from './friends/entities/FriendRequest.entity';
 import { GatewayModule } from './gateway/gateway.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import Notification from './notifications/entities/Notification.entity';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import Notification from './notifications/entities/Notification.entity';
         fileSize: 5 * 1024 * 1024, // 5MB
       },
     }),
+    EventEmitterModule.forRoot(),
     UsersModule,
     GamesModule,
     AuthModule,

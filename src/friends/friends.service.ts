@@ -6,6 +6,8 @@ import FriendRequest, { FriendRequestStatus } from './entities/FriendRequest.ent
 import User from 'src/users/entities/User.entity';
 import { UsersService } from 'src/users/users.service';
 import { ConnectionRegistryService, PresenceStatus } from 'src/connection-registry/connection-registry.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import FriendRequestSentEvent from 'src/events/friend-request-sent.event';
 
 export type FriendResponse = User & { status: PresenceStatus };
 
@@ -19,6 +21,7 @@ export class FriendsService {
         private readonly dataSource: DataSource,
         private readonly usersService: UsersService,
         private readonly presenceService: ConnectionRegistryService,
+        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     async sendRequest(senderId: string, friendCode: string): Promise<void> {
@@ -43,6 +46,9 @@ export class FriendsService {
         if (existing) throw new BadRequestException('Friend request already pending');
 
         await this.friendRequestRepository.save({ senderId, receiverId, status: FriendRequestStatus.PENDING });
+
+        const sender = await this.usersService.getUserById(senderId);
+        this.eventEmitter.emit('friend.request.sent', new FriendRequestSentEvent(senderId, sender.name, sender.avatarUrl ?? null, receiverId));
     }
 
     async getRequests(userId: string): Promise<FriendRequest[]> {
