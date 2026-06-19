@@ -35,4 +35,7 @@ export default class Game {
 
   @UpdateDateColumn()
   updatedAt?: Date;
+
+  @Column({ nullable: true })
+  completionDate?: Date;
 }

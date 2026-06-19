@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16
-    container_name: nest-postgres
+    container_name: postgres
     restart: always
     env_file:
       - ./.env
