@@ -33,7 +33,7 @@ export class UsersService {
         return !!user;
     }
 
-    async getUserByEmail({ email, withPassword = false }: GetUserOptions): Promise<User> {
+    async getUserByEmail({ email, withPassword = false }: GetUserOptions): Promise<User | null> {
         const queryBuilder = this.userRepository
             .createQueryBuilder("user")
             .where("user.email = :email", { email });
@@ -42,11 +42,7 @@ export class UsersService {
             queryBuilder.addSelect("user.password");
         }
 
-        const user = await queryBuilder.getOne();
-        if (!user) {
-            throw new Error("User not found");
-        }
-        return user;
+        return await queryBuilder.getOne();
     }
 
     async getUserById(id: string): Promise<User> {

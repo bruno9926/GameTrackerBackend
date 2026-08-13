@@ -1,17 +1,15 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import { Request } from "express";
-import { User } from "src/users/entities";
+import { TokenService, JwtPayload } from "../services/token.service";
 
 import { Reflector } from "@nestjs/core";
 import { IS_PUBLIC_KEY } from "../decorators/is-public.decorator";
 
-type UserPayload = Pick<User, "id">; // we only want to add the id
 // extending the Request interfaces so we can add the user property to it
 declare global {
     namespace Express {
         interface Request {
-            user?: UserPayload
+            user?: JwtPayload
         }
     }
 }
@@ -19,7 +17,7 @@ declare global {
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(
-        private readonly jwtService: JwtService,
+        private readonly tokenService: TokenService,
         private readonly reflector: Reflector
     ) { }
 
@@ -54,7 +52,7 @@ export class AuthGuard implements CanActivate {
             throw new UnauthorizedException("Invalid authorization header");
         }
         try {
-            const payload = await this.jwtService.verifyAsync<UserPayload>(token);
+            const payload = await this.tokenService.verifyAccessToken(token);
             req.user = payload;
             return true;
         } catch {
