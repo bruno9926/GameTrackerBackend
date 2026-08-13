@@ -6,6 +6,7 @@ import { UpdatePasswordDto, UpdateUserDto } from "./dtos";
 import { PasswordService } from "src/security/services/password.service";
 import { SupabaseStorageService } from "./supabase.service";
 import { generateFriendCode } from "src/utils/friend-code.util";
+import { CreateUserInput } from "./interfaces/create-user.input";
 
 @Injectable()
 export class UsersService {
@@ -16,11 +17,25 @@ export class UsersService {
         private readonly storageService: SupabaseStorageService,
     ) { }
 
-    async insertUser(userData: Partial<User>): Promise<User> {
-        const user = this.userRepository.create({
-            ...userData,
+    /**
+     * Factory for building a new User ready to be persisted, regardless of the signup source.
+     * Applies the defaults every account must have: a normalized username, a unique friend
+     * code, and a hashed password when one is supplied.
+     */
+    async createUser(userData: CreateUserInput): Promise<User> {
+        const hashedPassword = userData.password
+            ? await this.passwordService.hashPassword(userData.password)
+            : undefined;
+
+        return Object.assign(new User(), userData, {
+            username: userData.username.toLowerCase(),
             friendCode: generateFriendCode(),
+            password: hashedPassword
         });
+    }
+
+    async insertUser(userData: Partial<User>): Promise<User> {
+        const user = this.userRepository.create(userData);
         return await this.userRepository.save(user);
     }
 
@@ -83,6 +98,13 @@ export class UsersService {
         if (!user) {
             throw new BadRequestException({
                 message: "Invalid user"
+            });
+        }
+
+        if (!user.password) {
+            // accounts created via an OAuth provider (e.g. Google) have no password to change yet
+            throw new BadRequestException({
+                message: "This account does not have a password set"
             });
         }
 

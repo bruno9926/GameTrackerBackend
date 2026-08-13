@@ -1,19 +1,26 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, InternalServerErrorException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { LogInDto, RegisterDto, RefreshDto } from "./dtos";
 import { PasswordService } from "../security/services/password.service";
+import { TokenService } from "../security/services/token.service";
 import { UsersService } from "../users/users.service";
-import { JwtService } from "@nestjs/jwt";
 
 // entities
 import { User } from "../users/entities";
+import { GoogleUserInfo } from "./interfaces/google-user-info";
 
-type JwtPayload = { id: string };
+type LoginResult = {
+    token: string;
+    refreshToken: string;
+};
+
 @Injectable()
 export class AuthService {
     constructor(
         private readonly passwordService: PasswordService,
         private readonly usersService: UsersService,
-        private readonly jwtService: JwtService
+        private readonly tokenService: TokenService,
+        private readonly configService: ConfigService
     ) { }
 
     async registerUser(registerInput: RegisterDto): Promise<Partial<User>> {
@@ -23,7 +30,7 @@ export class AuthService {
         }
 
         const savedUser = await this.usersService.insertUser(
-            await this.toUserEntity(registerInput)
+            await this.toUserFromRegister(registerInput)
         );
         return {
             id: savedUser.id,
@@ -37,7 +44,7 @@ export class AuthService {
 
         const user = await this.usersService.getUserByEmail({ email, withPassword: true });
 
-        if (!user) {
+        if (!user || !user.password) {
             throw new BadRequestException("Invalid email or password");
         }
 
@@ -46,31 +53,44 @@ export class AuthService {
             throw new BadRequestException("Invalid email or password");
         }
 
-        const { password, ...userPublicData } = user;
-        return {
-            token: await this.createToken(user),
-            refreshToken: await this.createRefreshToken(user),
-            user: userPublicData
+        return await this.loginUser(user);
+    }
+
+    async googleLogin(googleUser: GoogleUserInfo) {
+        const email = googleUser.email;
+        let user = await this.usersService.getUserByEmail({ email });
+
+        if (!user) {
+            user = await this.usersService.insertUser(
+                await this.toUserFromGoogle(googleUser)
+            );
         }
+        return await this.loginUser(user)
     }
 
     async getUser(id: string): Promise<User> {
         return this.usersService.getUserById(id);
     }
 
+    buildGoogleRedirectUrl({ token, refreshToken }: LoginResult): string {
+        const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+        if (!frontendUrl) {
+            throw new InternalServerErrorException('FRONTEND_URL is not configured');
+        }
+        return `${frontendUrl}/auth/callback?token=${token}&refreshToken=${refreshToken}`;
+    }
+
     async refreshToken(refreshToken: string) {
         try {
-            const payload: JwtPayload = await this.jwtService.verifyAsync(refreshToken, {
-                secret: process.env.JWT_REFRESH_SECRET
-            });
+            const payload = await this.tokenService.verifyRefreshToken(refreshToken);
 
             const user = await this.usersService.getUserById(payload.id);
             if (!user) {
                 throw new BadRequestException("Invalid refresh token")
             }
             return {
-                token: await this.createToken(user),
-                refreshToken: await this.createRefreshToken(user)
+                token: await this.tokenService.generateAccessToken(user),
+                refreshToken: await this.tokenService.generateRefreshToken(user)
             }
         } catch {
             throw new BadRequestException("Invalid or expired refresh token");
@@ -79,29 +99,33 @@ export class AuthService {
 
     // utility methods
 
-    private async createToken(user: User): Promise<string> {
-        return this.jwtService.signAsync<JwtPayload>({
-            id: user.id
-        })
+    private async loginUser(user: User) {
+        const { password, ...userPublicData } = user;
+        return {
+            token: await this.tokenService.generateAccessToken(user),
+            refreshToken: await this.tokenService.generateRefreshToken(user),
+            user: userPublicData
+        }
     }
 
-    private async createRefreshToken(user: User): Promise<string> {
-        return this.jwtService.signAsync<JwtPayload>({
-            id: user.id
-        }, {
-            expiresIn: "7d",
-            secret: process.env.JWT_REFRESH_SECRET
-        })
+    // mappers
+    
+    private toUserFromGoogle(googleUser: GoogleUserInfo): Promise<User> {
+        return this.usersService.createUser({
+            email: googleUser.email,
+            name: googleUser.name,
+            avatarUrl: googleUser.avatarUrl,
+            // the display name isn't guaranteed unique; the email already is
+            username: googleUser.email
+        });
     }
 
-    private async toUserEntity(registerInput: RegisterDto): Promise<User> {
-        const hashedPassword = await this.passwordService.hashPassword(registerInput.password);
-
-        const user = new User();
-        user.name = registerInput.name;
-        user.username = registerInput.username.toLowerCase();
-        user.email = registerInput.email;
-        user.password = hashedPassword;
-        return user;
+    private toUserFromRegister(registerInput: RegisterDto): Promise<User> {
+        return this.usersService.createUser({
+            name: registerInput.name,
+            username: registerInput.username,
+            email: registerInput.email,
+            password: registerInput.password
+        });
     }
 } 
