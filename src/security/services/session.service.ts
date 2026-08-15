@@ -6,7 +6,7 @@ import { User } from "../../users/entities";
 export type JwtPayload = { id: string };
 
 @Injectable()
-export class TokenService {
+export class SessionService {
     constructor(
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService

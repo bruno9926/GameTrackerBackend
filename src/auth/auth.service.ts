@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, InternalServerErrorException } from "@
 import { ConfigService } from "@nestjs/config";
 import { LogInDto, RegisterDto, RefreshDto } from "./dtos";
 import { PasswordService } from "../security/services/password.service";
-import { TokenService } from "../security/services/token.service";
+import { SessionService } from "../security/services/session.service";
 import { UsersService } from "../users/users.service";
 import { AuthCodeService, LoginResult } from "./auth-code.service";
 
@@ -15,7 +15,7 @@ export class AuthService {
     constructor(
         private readonly passwordService: PasswordService,
         private readonly usersService: UsersService,
-        private readonly tokenService: TokenService,
+        private readonly sessionService: SessionService,
         private readonly configService: ConfigService,
         private readonly authCodeService: AuthCodeService
     ) { }
@@ -104,15 +104,15 @@ export class AuthService {
     /** Issues a fresh pair of tokens from a valid refresh token. Rejects if it's invalid or expired. */
     async refreshToken(refreshToken: string) {
         try {
-            const payload = await this.tokenService.verifyRefreshToken(refreshToken);
+            const payload = await this.sessionService.verifyRefreshToken(refreshToken);
 
             const user = await this.usersService.getUserById(payload.id);
             if (!user) {
                 throw new BadRequestException("Invalid refresh token")
             }
             return {
-                token: await this.tokenService.generateAccessToken(user),
-                refreshToken: await this.tokenService.generateRefreshToken(user)
+                token: await this.sessionService.generateAccessToken(user),
+                refreshToken: await this.sessionService.generateRefreshToken(user)
             }
         } catch {
             throw new BadRequestException("Invalid or expired refresh token");
@@ -124,8 +124,8 @@ export class AuthService {
     private async issueSession(user: User) {
         const { password, ...userPublicData } = user;
         return {
-            token: await this.tokenService.generateAccessToken(user),
-            refreshToken: await this.tokenService.generateRefreshToken(user),
+            token: await this.sessionService.generateAccessToken(user),
+            refreshToken: await this.sessionService.generateRefreshToken(user),
             user: userPublicData
         }
     }

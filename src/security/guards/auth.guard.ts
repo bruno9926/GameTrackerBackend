@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Request } from "express";
-import { TokenService, JwtPayload } from "../services/token.service";
+import { SessionService, JwtPayload } from "../services/session.service";
 
 import { Reflector } from "@nestjs/core";
 import { IS_PUBLIC_KEY } from "../decorators/is-public.decorator";
@@ -17,7 +17,7 @@ declare global {
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(
-        private readonly tokenService: TokenService,
+        private readonly sessionService: SessionService,
         private readonly reflector: Reflector
     ) { }
 
@@ -52,7 +52,7 @@ export class AuthGuard implements CanActivate {
             throw new UnauthorizedException("Invalid authorization header");
         }
         try {
-            const payload = await this.tokenService.verifyAccessToken(token);
+            const payload = await this.sessionService.verifyAccessToken(token);
             req.user = payload;
             return true;
         } catch {
