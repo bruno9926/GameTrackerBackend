@@ -20,6 +20,7 @@ export class AuthService {
         private readonly authCodeService: AuthCodeService
     ) { }
 
+    /** Creates a new account from email/password credentials. Rejects if the email is already taken. */
     async registerUser(registerInput: RegisterDto): Promise<Partial<User>> {
         const userExists = await this.usersService.userExists(registerInput.email);
         if (userExists) {
@@ -36,7 +37,8 @@ export class AuthService {
         };
     }
 
-    async login(loginInput: LogInDto) {
+    /** Authenticates a user by email/password and issues fresh tokens. Rejects on invalid credentials. */
+    async loginWithPassword(loginInput: LogInDto) {
         const { email, password: passwordInput } = loginInput;
 
         const user = await this.usersService.getUserByEmail({ email, withPassword: true });
@@ -50,10 +52,14 @@ export class AuthService {
             throw new BadRequestException("Invalid email or password");
         }
 
-        return await this.loginUser(user);
+        return await this.issueSession(user);
     }
 
-    async googleLogin(googleUser: GoogleUserInfo): Promise<string> {
+    /**
+     * Authenticates a user via their Google identity, creating the account on first
+     * sign-in. Rejects if that email already belongs to a non-Google account.
+     */
+    async loginWithGoogle(googleUser: GoogleUserInfo): Promise<string> {
         const { email, googleId } = googleUser;
         let user = await this.usersService.getUserByGoogleId(googleId);
 
@@ -68,10 +74,11 @@ export class AuthService {
             );
         }
 
-        const { token, refreshToken } = await this.loginUser(user);
+        const { token, refreshToken } = await this.issueSession(user);
         return this.authCodeService.issueCode({ token, refreshToken });
     }
 
+    /** Redeems a Google sign-in code for the resulting access/refresh tokens. */
     exchangeGoogleCode(code: string): LoginResult {
         const result = this.authCodeService.exchangeCode(code);
         if (!result) {
@@ -80,10 +87,12 @@ export class AuthService {
         return result;
     }
 
+    /** Retrieves a user's profile by id. */
     async getUser(id: string): Promise<User> {
         return this.usersService.getUserById(id);
     }
 
+    /** Builds the frontend URL a Google sign-in should redirect to, carrying the exchange code. */
     buildGoogleRedirectUrl(code: string): string {
         const frontendUrl = this.configService.get<string>('FRONTEND_URL');
         if (!frontendUrl) {
@@ -92,6 +101,7 @@ export class AuthService {
         return `${frontendUrl}/auth/callback?code=${code}`;
     }
 
+    /** Issues a fresh pair of tokens from a valid refresh token. Rejects if it's invalid or expired. */
     async refreshToken(refreshToken: string) {
         try {
             const payload = await this.tokenService.verifyRefreshToken(refreshToken);
@@ -111,7 +121,7 @@ export class AuthService {
 
     // utility methods
 
-    private async loginUser(user: User) {
+    private async issueSession(user: User) {
         const { password, ...userPublicData } = user;
         return {
             token: await this.tokenService.generateAccessToken(user),

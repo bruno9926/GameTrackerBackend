@@ -23,6 +23,7 @@ type PendingResult = {
 export class AuthCodeService {
     private readonly pendingResults = new Map<string, PendingResult>();
 
+    /** Registers a login result under a new one-time code and returns that code. */
     issueCode(result: LoginResult): string {
         const code = nanoid(CODE_LENGTH);
         this.pendingResults.set(code, {
@@ -32,6 +33,10 @@ export class AuthCodeService {
         return code;
     }
 
+    /**
+     * Redeems a previously issued code for its login result. The code is consumed
+     * on this call regardless of outcome. Returns null if the code is unknown or expired.
+     */
     exchangeCode(code: string): LoginResult | null {
         const pending = this.pendingResults.get(code);
         this.pendingResults.delete(code);

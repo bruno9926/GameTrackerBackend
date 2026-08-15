@@ -30,7 +30,7 @@ export class AuthController {
     @IsPublic()
     @Post('login')
     login(@Body() loginInput: LogInDto) {
-        return this.authService.login(loginInput);
+        return this.authService.loginWithPassword(loginInput);
     }
 
     @Get('me')
@@ -63,7 +63,7 @@ export class AuthController {
         @CurrentUser() googleUser: GoogleUserInfo,
         @Res() res: Response
     ) {
-        const code = await this.authService.googleLogin(googleUser);
+        const code = await this.authService.loginWithGoogle(googleUser);
         return res.redirect(this.authService.buildGoogleRedirectUrl(code));
     }
 

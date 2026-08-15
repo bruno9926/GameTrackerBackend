@@ -34,24 +34,29 @@ export class UsersService {
         });
     }
 
+    /** Persists a new user. */
     async insertUser(userData: Partial<User>): Promise<User> {
         const user = this.userRepository.create(userData);
         return await this.userRepository.save(user);
     }
 
+    /** Looks up a user by friend code. */
     async getUserByFriendCode(friendCode: string): Promise<User | null> {
         return this.userRepository.findOne({ where: { friendCode } });
     }
 
+    /** Reports whether an account is already registered under this email. */
     async userExists(email: string): Promise<boolean> {
         const user = await this.userRepository.findOne({ where: { email } });
         return !!user;
     }
 
+    /** Looks up a user by their linked Google account id. */
     async getUserByGoogleId(googleId: string): Promise<User | null> {
         return this.userRepository.findOne({ where: { googleId } });
     }
 
+    /** Looks up a user by email, optionally including the password hash. */
     async getUserByEmail({ email, withPassword = false }: GetUserOptions): Promise<User | null> {
         const queryBuilder = this.userRepository
             .createQueryBuilder("user")
@@ -64,6 +69,7 @@ export class UsersService {
         return await queryBuilder.getOne();
     }
 
+    /** Looks up a user by id. Throws if no such user exists. */
     async getUserById(id: string): Promise<User> {
         const user = await this.userRepository.findOne({ where: { id } });
         if (!user) {
@@ -72,6 +78,7 @@ export class UsersService {
         return user;
     }
 
+    /** Applies a partial update to a user's profile info. Throws if the user doesn't exist. */
     async updateUserInfo(id: string, userInfo: UpdateUserDto): Promise<User> {
         const user = await this.userRepository.preload({
             id,
@@ -85,6 +92,7 @@ export class UsersService {
         return this.userRepository.save(user);
     }
 
+    /** Changes a user's password after verifying their current one. */
     async updatePassword(updatePassword: UpdatePasswordDto, userId: string) {
         const { currentPassword, newPassword } = updatePassword;
         if (currentPassword === newPassword) {
@@ -127,6 +135,7 @@ export class UsersService {
         return { success: true }
     }
 
+    /** Replaces a user's avatar image. */
     async updateAvatar(file: Express.Multer.File, userId: string) {
         if (!file.mimetype.startsWith('image/')) {
             throw new BadRequestException('Invalid file type');
