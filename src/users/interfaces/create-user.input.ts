@@ -4,4 +4,5 @@ export interface CreateUserInput {
     email: string;
     password?: string;
     avatarUrl?: string;
+    googleId?: string;
 }

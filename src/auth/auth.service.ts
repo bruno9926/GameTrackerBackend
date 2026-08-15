@@ -54,10 +54,15 @@ export class AuthService {
     }
 
     async googleLogin(googleUser: GoogleUserInfo): Promise<string> {
-        const email = googleUser.email;
-        let user = await this.usersService.getUserByEmail({ email });
+        const { email, googleId } = googleUser;
+        let user = await this.usersService.getUserByGoogleId(googleId);
 
         if (!user) {
+            const existingUser = await this.usersService.getUserByEmail({ email });
+            if (existingUser) {
+                throw new BadRequestException("An account with this email already exists. Please log in with your password instead.");
+            }
+
             user = await this.usersService.insertUser(
                 await this.toUserFromGoogle(googleUser)
             );
@@ -123,7 +128,8 @@ export class AuthService {
             name: googleUser.name,
             avatarUrl: googleUser.avatarUrl,
             // the display name isn't guaranteed unique; the email already is
-            username: googleUser.email
+            username: googleUser.email,
+            googleId: googleUser.googleId
         });
     }
 

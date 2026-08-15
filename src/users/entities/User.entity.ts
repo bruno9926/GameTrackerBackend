@@ -21,6 +21,9 @@ export default class User {
     @Column({ select: false, nullable: true })
     password?: string | null;
 
+    @Column({ unique: true, nullable: true })
+    googleId?: string | null;
+
     @Column({ unique: true })
     friendCode: string;
 

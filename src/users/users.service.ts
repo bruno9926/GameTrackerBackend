@@ -48,6 +48,10 @@ export class UsersService {
         return !!user;
     }
 
+    async getUserByGoogleId(googleId: string): Promise<User | null> {
+        return this.userRepository.findOne({ where: { googleId } });
+    }
+
     async getUserByEmail({ email, withPassword = false }: GetUserOptions): Promise<User | null> {
         const queryBuilder = this.userRepository
             .createQueryBuilder("user")
