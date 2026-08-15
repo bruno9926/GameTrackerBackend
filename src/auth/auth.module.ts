@@ -5,6 +5,7 @@ import { SecurityModule } from "src/security/security.module";
 import { PassportModule } from "@nestjs/passport";
 // services
 import { AuthService } from "./auth.service";
+import { AuthCodeService } from "./auth-code.service";
 import { GoogleStrategy } from "./strategies/google.strategy";
 import { GoogleAuthExceptionFilter } from "./filters/google-auth-exception.filter";
 
@@ -15,6 +16,6 @@ import { GoogleAuthExceptionFilter } from "./filters/google-auth-exception.filte
         PassportModule
     ],
     controllers: [AuthController],
-    providers: [AuthService, GoogleStrategy, GoogleAuthExceptionFilter],
+    providers: [AuthService, AuthCodeService, GoogleStrategy, GoogleAuthExceptionFilter],
 })
 export class AuthModule {}

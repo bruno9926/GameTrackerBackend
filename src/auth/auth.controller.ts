@@ -10,7 +10,7 @@ import { IsPublic } from "../security/decorators/is-public.decorator";
 import { AuthGuard } from "../security/guards/auth.guard";
 import { AuthGuard as PassportGuard } from "@nestjs/passport";
 //dtos
-import { RegisterDto, LogInDto } from "./dtos";
+import { RegisterDto, LogInDto, ExchangeCodeDto } from "./dtos";
 import RefreshDto from "./dtos/refresh.dto";
 
 
@@ -63,7 +63,13 @@ export class AuthController {
         @CurrentUser() googleUser: GoogleUserInfo,
         @Res() res: Response
     ) {
-        const loginResult = await this.authService.googleLogin(googleUser);
-        return res.redirect(this.authService.buildGoogleRedirectUrl(loginResult));
+        const code = await this.authService.googleLogin(googleUser);
+        return res.redirect(this.authService.buildGoogleRedirectUrl(code));
+    }
+
+    @IsPublic()
+    @Post('google/exchange')
+    exchangeGoogleCode(@Body() body: ExchangeCodeDto) {
+        return this.authService.exchangeGoogleCode(body.code);
     }
 }

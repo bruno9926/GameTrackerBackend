@@ -4,15 +4,11 @@ import { LogInDto, RegisterDto, RefreshDto } from "./dtos";
 import { PasswordService } from "../security/services/password.service";
 import { TokenService } from "../security/services/token.service";
 import { UsersService } from "../users/users.service";
+import { AuthCodeService, LoginResult } from "./auth-code.service";
 
 // entities
 import { User } from "../users/entities";
 import { GoogleUserInfo } from "./interfaces/google-user-info";
-
-type LoginResult = {
-    token: string;
-    refreshToken: string;
-};
 
 @Injectable()
 export class AuthService {
@@ -20,7 +16,8 @@ export class AuthService {
         private readonly passwordService: PasswordService,
         private readonly usersService: UsersService,
         private readonly tokenService: TokenService,
-        private readonly configService: ConfigService
+        private readonly configService: ConfigService,
+        private readonly authCodeService: AuthCodeService
     ) { }
 
     async registerUser(registerInput: RegisterDto): Promise<Partial<User>> {
@@ -56,7 +53,7 @@ export class AuthService {
         return await this.loginUser(user);
     }
 
-    async googleLogin(googleUser: GoogleUserInfo) {
+    async googleLogin(googleUser: GoogleUserInfo): Promise<string> {
         const email = googleUser.email;
         let user = await this.usersService.getUserByEmail({ email });
 
@@ -65,19 +62,29 @@ export class AuthService {
                 await this.toUserFromGoogle(googleUser)
             );
         }
-        return await this.loginUser(user)
+
+        const { token, refreshToken } = await this.loginUser(user);
+        return this.authCodeService.issueCode({ token, refreshToken });
+    }
+
+    exchangeGoogleCode(code: string): LoginResult {
+        const result = this.authCodeService.exchangeCode(code);
+        if (!result) {
+            throw new BadRequestException("Invalid or expired code");
+        }
+        return result;
     }
 
     async getUser(id: string): Promise<User> {
         return this.usersService.getUserById(id);
     }
 
-    buildGoogleRedirectUrl({ token, refreshToken }: LoginResult): string {
+    buildGoogleRedirectUrl(code: string): string {
         const frontendUrl = this.configService.get<string>('FRONTEND_URL');
         if (!frontendUrl) {
             throw new InternalServerErrorException('FRONTEND_URL is not configured');
         }
-        return `${frontendUrl}/auth/callback?token=${token}&refreshToken=${refreshToken}`;
+        return `${frontendUrl}/auth/callback?code=${code}`;
     }
 
     async refreshToken(refreshToken: string) {
