@@ -25,6 +25,14 @@ export class SessionService {
         });
     }
 
+    /** Issues a fresh access/refresh token pair identifying this user. */
+    async issueTokenPair(user: User): Promise<{ token: string; refreshToken: string }> {
+        return {
+            token: await this.generateAccessToken(user),
+            refreshToken: await this.generateRefreshToken(user)
+        };
+    }
+
     /** Validates a refresh token and returns the identity it carries. Rejects if invalid or expired. */
     verifyRefreshToken(refreshToken: string): Promise<JwtPayload> {
         return this.jwtService.verifyAsync<JwtPayload>(refreshToken, {

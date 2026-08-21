@@ -1,5 +1,5 @@
 import { Body, Post, Controller, Get, UseGuards, UseFilters, Res } from "@nestjs/common";
-import { AuthService } from "./auth.service";
+import { AuthService } from "./services";
 import { GoogleUserInfo } from "./interfaces/google-user-info";
 import { GoogleAuthExceptionFilter } from "./filters/google-auth-exception.filter";
 import { Response } from "express";
