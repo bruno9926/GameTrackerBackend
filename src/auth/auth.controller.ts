@@ -12,6 +12,7 @@ import { AuthGuard as PassportGuard } from "@nestjs/passport";
 //dtos
 import { RegisterDto, LogInDto, ExchangeCodeDto } from "./dtos";
 import RefreshDto from "./dtos/refresh.dto";
+import VerifyEmailDto from "./dtos/verify-email.dto";
 
 
 @Controller('auth')
@@ -25,6 +26,18 @@ export class AuthController {
     @Post('register')
     register(@Body() registerInput: RegisterDto) {
         return this.authService.registerUser(registerInput);
+    }
+
+    @IsPublic()
+    @Post('verify-email')
+    verifyEmail(@Body() verifyInput: VerifyEmailDto) {
+        return this.authService.verifyEmail(verifyInput);
+    }
+
+    @IsPublic()
+    @Post('resend-verification-code')
+    resendVerificationCode(@Body('email') email: string) {
+        return this.authService.resendVerificationCode(email);
     }
 
     @IsPublic()

@@ -5,11 +5,14 @@ import Friendship from './entities/Friendship.entity';
 import FriendRequest, { FriendRequestStatus } from './entities/FriendRequest.entity';
 import User from 'src/users/entities/User.entity';
 import { UsersService } from 'src/users/users.service';
+import { PublicUserData } from 'src/users/interfaces/public-user-data';
+import Game from 'src/games/entities/Game.entity';
 import { ConnectionRegistryService, PresenceStatus } from 'src/connection-registry/connection-registry.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import FriendRequestSentEvent from 'src/events/friend-request-sent.event';
 
-export type FriendResponse = User & { status: PresenceStatus };
+// games are only fetched for a single friend lookup (getFriend), not for the list (getFriends)
+export type FriendResponse = PublicUserData & { games?: Game[]; status: PresenceStatus };
 
 @Injectable()
 export class FriendsService {
@@ -105,7 +108,15 @@ export class FriendsService {
             .where('u.id = :friendId', { friendId })
             .getOne();
 
-        return { ...friend, status: this.presenceService.getStatus(friendId) };
+        if (!friend) {
+            throw new NotFoundException('Friend not found');
+        }
+
+        return {
+            ...this.usersService.toPublicUserData(friend),
+            games: friend.games,
+            status: this.presenceService.getStatus(friendId)
+        };
     }
 
     async removeFriend(userId: string, friendId: string): Promise<void> {
@@ -128,7 +139,10 @@ export class FriendsService {
             .getMany();
 
         const statuses = this.presenceService.getStatuses(friends.map(f => f.id));
-        return friends.map(friend => ({ ...friend, status: statuses[friend.id] }));
+        return friends.map(friend => ({
+            ...this.usersService.toPublicUserData(friend),
+            status: statuses[friend.id]
+        }));
     }
 
     async countFriendsPlayingGameTitle(userId: string, gameTitleId: string): Promise<number> {

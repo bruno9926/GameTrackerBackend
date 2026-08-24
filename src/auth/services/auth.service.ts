@@ -9,6 +9,9 @@ import { PasswordAuthService } from "./password-auth.service";
 // entities
 import { User } from "../../users/entities";
 import { GoogleUserInfo } from "../interfaces/google-user-info";
+import VerifyEmailDto from "../dtos/verify-email.dto";
+import { EmailService } from "src/mailing/email.service";
+import { PublicUserData } from "../../users/interfaces/public-user-data";
 
 @Injectable()
 export class AuthService {
@@ -16,7 +19,8 @@ export class AuthService {
         private readonly usersService: UsersService,
         private readonly sessionService: SessionService,
         private readonly googleAuthService: GoogleAuthService,
-        private readonly passwordAuthService: PasswordAuthService
+        private readonly passwordAuthService: PasswordAuthService,
+        private readonly emailService: EmailService
     ) { }
 
     /** Retrieves a user's profile by id. */
@@ -27,13 +31,36 @@ export class AuthService {
     // password auth
 
     /** Creates a new account from email/password credentials. Rejects if the email is already taken. */
-    async registerUser(registerInput: RegisterDto): Promise<Partial<User>> {
-        return this.passwordAuthService.registerUser(registerInput);
+    async registerUser(registerInput: RegisterDto): Promise<PublicUserData> {
+        const { user, verificationCode } = await this.passwordAuthService.registerUser(registerInput);
+
+        if (verificationCode) {
+            try {
+                await this.emailService.sendVerificationCode(user.email, verificationCode);
+            } catch {
+                console.error(`Failed to send verification email to newly registered user ${user.id} (${user.email})`);
+            }
+        } else {
+            console.error(`Missing verification code for newly registered user ${user.id} (${user.email})`);
+        }
+
+        return user;
     }
 
     /** Authenticates a user by email/password and issues fresh tokens. Rejects on invalid credentials. */
     async loginWithPassword(loginInput: LogInDto) {
         return this.passwordAuthService.loginWithPassword(loginInput);
+    }
+
+    /** Confirms a user owns the email they registered with. Rejects on an invalid or expired code. */
+    async verifyEmail(verifyInput: VerifyEmailDto) {
+        return this.passwordAuthService.verifyEmail(verifyInput.code, verifyInput.email);
+    }
+
+    /** Sends a fresh verification code to an unverified account. */
+    async resendVerificationCode(email: string): Promise<void> {
+        const verificationCode = await this.passwordAuthService.regenerateVerificationCode(email);
+        await this.emailService.sendVerificationCode(email, verificationCode);
     }
 
     // google auth

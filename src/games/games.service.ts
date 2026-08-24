@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { UpdateGameDto } from './games-dto';
 import { FriendsService } from 'src/friends/friends.service';
 import { IGDBService } from 'src/igdb/igdb.service';
+import { AppErrors } from 'src/errors/app-errors';
 
 @Injectable()
 export class GamesService {
@@ -40,10 +41,7 @@ export class GamesService {
   async createGame(userId: string, gameInput: CreateGameDto): Promise<Game[]> {
     const alreadyCreated = await this.gameAlreadyCreated(userId, gameInput.gameTitleId);
     if (alreadyCreated) {
-      throw new ConflictException({
-        message: 'Game already exists for this user',
-        code: 'GAME_ALREADY_EXISTS',
-      });
+      throw new ConflictException(AppErrors.GAME_ALREADY_EXISTS);
     }
     const game = this.gameRepository.create({ ...gameInput, user: { id: userId } });
     await this.gameRepository.save(game);

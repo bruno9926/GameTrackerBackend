@@ -63,7 +63,9 @@ export class GoogleAuthService {
             avatarUrl: googleUser.avatarUrl,
             // the display name isn't guaranteed unique; the email already is
             username: googleUser.email,
-            googleId: googleUser.googleId
+            googleId: googleUser.googleId,
+            // we dont need to verify email for google users
+            isEmailVerified: true
         });
     }
 

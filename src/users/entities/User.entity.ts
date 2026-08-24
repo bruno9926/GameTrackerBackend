@@ -27,6 +27,15 @@ export default class User {
     @Column({ unique: true })
     friendCode: string;
 
+    @Column({ default: false })
+    isEmailVerified: boolean;
+
+    @Column({ select: false, nullable: true })
+    emailVerificationCode?: string | null;
+
+    @Column({ select: false, nullable: true })
+    emailVerificationCodeExpiresAt?: Date | null;
+
     @OneToMany(() => Game, game => game.user)
     games: Game[];
 }

@@ -97,6 +97,10 @@ describe('GoogleAuthService', () => {
 
             await expect(service.loginWithGoogle(googleUser)).resolves.toEqual(expect.any(String));
             expect(usersServiceMock.insertUser).toHaveBeenCalledWith(builtUser);
+            // Google already verifies ownership of the email, so there's nothing left to confirm
+            expect(usersServiceMock.createUser).toHaveBeenCalledWith(
+                expect.objectContaining({ isEmailVerified: true })
+            );
         });
 
         it('rejects when the email already belongs to a non-Google account', async () => {

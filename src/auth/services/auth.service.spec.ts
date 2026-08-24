@@ -5,6 +5,7 @@ import { UsersService } from "src/users/users.service";
 import { SessionService } from "src/security/services/session.service";
 import { GoogleAuthService } from "./google-auth.service";
 import { PasswordAuthService } from "./password-auth.service";
+import { EmailService } from "src/mailing/email.service";
 import { User } from "src/users/entities";
 
 describe('AuthService', () => {
@@ -29,9 +30,10 @@ describe('AuthService', () => {
         const SessionServiceMock = { provide: SessionService, useValue: sessionServiceMock };
         const GoogleAuthServiceMock = { provide: GoogleAuthService, useValue: {} };
         const PasswordAuthServiceMock = { provide: PasswordAuthService, useValue: {} };
+        const EmailServiceMock = { provide: EmailService, useValue: { sendVerificationCode: jest.fn() } };
 
         const module: TestingModule = await Test.createTestingModule({
-            providers: [AuthService, UsersServiceMock, SessionServiceMock, GoogleAuthServiceMock, PasswordAuthServiceMock]
+            providers: [AuthService, UsersServiceMock, SessionServiceMock, GoogleAuthServiceMock, PasswordAuthServiceMock, EmailServiceMock]
         }).compile();
 
         service = module.get<AuthService>(AuthService);

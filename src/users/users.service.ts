@@ -7,6 +7,7 @@ import { PasswordService } from "src/security/services/password.service";
 import { SupabaseStorageService } from "./supabase.service";
 import { generateFriendCode } from "src/utils/friend-code.util";
 import { CreateUserInput } from "./interfaces/create-user.input";
+import { PublicUserData } from "./interfaces/public-user-data";
 
 @Injectable()
 export class UsersService {
@@ -34,6 +35,29 @@ export class UsersService {
         });
     }
 
+    /** Strips a user down to the fields that are safe to hand back to any client. */
+    toPublicUserData(user: User): PublicUserData {
+        const { id, name, username, email, avatarUrl, friendCode } = user;
+        return { id, name, username, email, avatarUrl, friendCode };
+    }
+
+    /** Marks a user's email as verified and clears the now-spent verification code. */
+    async markEmailAsVerified(userId: string): Promise<void> {
+        await this.userRepository.update(userId, {
+            isEmailVerified: true,
+            emailVerificationCode: null,
+            emailVerificationCodeExpiresAt: null
+        });
+    }
+
+    /** Replaces a user's verification code, e.g. when they request a resend. */
+    async setEmailVerificationCode(userId: string, code: string, expiresAt: Date): Promise<void> {
+        await this.userRepository.update(userId, {
+            emailVerificationCode: code,
+            emailVerificationCodeExpiresAt: expiresAt
+        });
+    }
+
     /** Persists a new user. */
     async insertUser(userData: Partial<User>): Promise<User> {
         const user = this.userRepository.create(userData);
@@ -56,14 +80,17 @@ export class UsersService {
         return this.userRepository.findOne({ where: { googleId } });
     }
 
-    /** Looks up a user by email, optionally including the password hash. */
-    async getUserByEmail({ email, withPassword = false }: GetUserOptions): Promise<User | null> {
+    /** Looks up a user by email, optionally including the password hash and/or the email verification code. */
+    async getUserByEmail({ email, withPassword = false, withEmailVerification = false }: GetUserOptions): Promise<User | null> {
         const queryBuilder = this.userRepository
             .createQueryBuilder("user")
             .where("user.email = :email", { email });
 
         if (withPassword) {
             queryBuilder.addSelect("user.password");
+        }
+        if (withEmailVerification) {
+            queryBuilder.addSelect(["user.emailVerificationCode", "user.emailVerificationCodeExpiresAt"]);
         }
 
         return await queryBuilder.getOne();
@@ -149,4 +176,5 @@ export class UsersService {
 type GetUserOptions = {
     email: string;
     withPassword?: boolean;
+    withEmailVerification?: boolean;
 }
