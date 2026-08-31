@@ -27,6 +27,7 @@ export class FriendsService {
         private readonly eventEmitter: EventEmitter2,
     ) { }
 
+    /** Sends a friend request to the user with the given friend code. */
     async sendRequest(senderId: string, friendCode: string): Promise<void> {
         const receiver = await this.usersService.getUserByFriendCode(friendCode);
         if (!receiver) throw new NotFoundException('User not found');
@@ -54,6 +55,7 @@ export class FriendsService {
         this.eventEmitter.emit('friend.request.sent', new FriendRequestSentEvent(senderId, sender.name, sender.avatarUrl ?? null, receiverId));
     }
 
+    /** Returns the pending friend requests sent to this user. */
     async getRequests(userId: string): Promise<FriendRequest[]> {
         return this.friendRequestRepository.find({
             where: { receiverId: userId, status: FriendRequestStatus.PENDING },
@@ -61,6 +63,7 @@ export class FriendsService {
         });
     }
 
+    /** Accepts a pending friend request, creating the friendship. */
     async acceptRequest(requestId: string, userId: string): Promise<void> {
         const request = await this.friendRequestRepository.findOne({
             where: { id: requestId, receiverId: userId, status: FriendRequestStatus.PENDING },
@@ -80,6 +83,7 @@ export class FriendsService {
         });
     }
 
+    /** Rejects a pending friend request. */
     async rejectRequest(requestId: string, userId: string): Promise<void> {
         const result = await this.friendRequestRepository.update(
             { id: requestId, receiverId: userId, status: FriendRequestStatus.PENDING },
@@ -98,6 +102,7 @@ export class FriendsService {
         });
     }
 
+    /** Returns a single friend's public data, library, and presence status. */
     async getFriend(userId: string, friendId: string): Promise<FriendResponse> {
         if (!await this.areFriends(userId, friendId))
             throw new NotFoundException('Friendship not found');
@@ -119,6 +124,7 @@ export class FriendsService {
         };
     }
 
+    /** Removes an existing friendship between two users. */
     async removeFriend(userId: string, friendId: string): Promise<void> {
         if (!await this.areFriends(userId, friendId)) {
             throw new NotFoundException('Friendship not found');    
@@ -127,6 +133,7 @@ export class FriendsService {
         await this.friendshipRepository.delete({ user1Id, user2Id });
     }
 
+    /** Returns this user's friends with their public data and presence status. */
     async getFriends(userId: string): Promise<FriendResponse[]> {
         const friends = await this.dataSource
             .createQueryBuilder(User, 'u')
@@ -145,7 +152,18 @@ export class FriendsService {
         }));
     }
 
+    /** Returns the friends of this user who have the given game title in their library. */
+    async getFriendsPlayingGameTitle(userId: string, gameTitleId: string): Promise<PublicUserData[]> {
+        const friends = await this.friendsPlayingGameTitleQuery(userId, gameTitleId).getMany();
+        return friends.map(friend => this.usersService.toPublicUserData(friend));
+    }
+
+    /** Counts how many of this user's friends have the given game title in their library. */
     async countFriendsPlayingGameTitle(userId: string, gameTitleId: string): Promise<number> {
+        return this.friendsPlayingGameTitleQuery(userId, gameTitleId).getCount();
+    }
+
+    private friendsPlayingGameTitleQuery(userId: string, gameTitleId: string) {
         return this.dataSource
             .createQueryBuilder(User, 'u')
             .innerJoin(Friendship, 'f', `
@@ -155,7 +173,6 @@ export class FriendsService {
             `)
             .innerJoin('u.games', 'g', 'g.gameTitleId = :gameTitleId')
             .setParameter('userId', userId)
-            .setParameter('gameTitleId', gameTitleId)
-            .getCount();
+            .setParameter('gameTitleId', gameTitleId);
     }
 }

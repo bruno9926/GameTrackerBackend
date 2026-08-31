@@ -4,7 +4,7 @@ import { GameOfTheWeek } from './entities';
 import type CreateGameDto from './games-dto/create-game.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UpdateGameDto } from './games-dto';
+import { GameDetailsDto, UpdateGameDto } from './games-dto';
 import { FriendsService } from 'src/friends/friends.service';
 import { IGDBService } from 'src/igdb/igdb.service';
 import { AppErrors } from 'src/errors/app-errors';
@@ -90,6 +90,15 @@ export class GamesService {
       usersPlaying,
       friendsPlaying,
     };
+  }
+
+  async getGameDetails(userId: string, gameTitleId: string): Promise<GameDetailsDto> {
+    const [gameTitle, friendsPlaying] = await Promise.all([
+      this.igdbService.getById(gameTitleId),
+      this.friendsService.getFriendsPlayingGameTitle(userId, gameTitleId),
+    ]);
+
+    return { gameTitle, friendsPlaying };
   }
 
   private async fetchCoverUrl(gameTitleId: string | null): Promise<string | null> {

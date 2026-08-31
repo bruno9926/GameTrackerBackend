@@ -64,4 +64,12 @@ export class GamesController {
   getGameOfTheWeek(@CurrentUser("id") userId: string) {
     return this.gamesService.getGameOfTheWeek(userId);
   }
+
+  @Get(':gameTitleId')
+  getGameDetails(
+    @Param('gameTitleId') gameTitleId: string,
+    @CurrentUser("id") userId: string
+  ) {
+    return this.gamesService.getGameDetails(userId, gameTitleId);
+  }
 }
