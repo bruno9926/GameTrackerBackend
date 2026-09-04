@@ -17,6 +17,7 @@ import { GatewayModule } from './gateway/gateway.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import Notification from './notifications/entities/Notification.entity';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import GameQueueEntry from './games/entities/GameQueueEntry.entity';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [Game, User, Friendship, FriendRequest, Notification],
+      entities: [Game, User, Friendship, FriendRequest, Notification, GameQueueEntry],
       synchronize: true,
       ssl: process.env.POSTGRES_SSL === 'true',
       extra: {

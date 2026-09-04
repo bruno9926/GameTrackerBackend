@@ -10,21 +10,22 @@ import {
   UnauthorizedException,
   UseGuards
 } from '@nestjs/common';
-import { GamesService } from './games.service';
 // decorators
 import { CurrentUser } from 'src/security/decorators/current-user.decorator';
 // guards
 import { AuthGuard } from 'src/security/guards/auth.guard';
-import { CreateGameDto, UpdateGameDto } from './games-dto';
+import { CreateGameDto, UpdateGameDto, QueueMovementDto } from './games-dto';
 import { IGDBService } from 'src/igdb/igdb.service';
+import { GameQueueService, GamesService } from './services';
 
 @Controller('games')
 @UseGuards(AuthGuard)
 export class GamesController {
   constructor(
     private gamesService: GamesService,
+    private gameQueueService: GameQueueService,
     private igdbService: IGDBService
-  ) {}
+  ) { }
 
   @Get()
   getAllGames(@CurrentUser("id") userId: string) {
@@ -47,6 +48,14 @@ export class GamesController {
     return this.gamesService.updateGame(userId, gameInput);
   }
 
+  @Delete('/queue')
+  removeGameFromQueue(
+    @Body('gameId') gameId: string,
+    @CurrentUser("id") userId: string
+  ) {
+    return this.gameQueueService.removeFromQueue(userId, gameId);
+  }
+
   @Delete(':id')
   deleteGame(
     @Param('id') id: string,
@@ -63,6 +72,21 @@ export class GamesController {
   @Get('/gotw')
   getGameOfTheWeek(@CurrentUser("id") userId: string) {
     return this.gamesService.getGameOfTheWeek(userId);
+  }
+
+  @Get('/queue')
+  getGamesInQueue(
+    @CurrentUser("id") userId: string
+  ) {
+    return this.gameQueueService.getGamesInQueue(userId);
+  }
+
+  @Put('/queue')
+  moveGameInQueue(
+    @Body() queueMovementDto: QueueMovementDto,
+    @CurrentUser("id") userId: string
+  ) {
+    return this.gameQueueService.moveGameInQueue(userId, queueMovementDto);
   }
 
   @Get(':gameTitleId')
