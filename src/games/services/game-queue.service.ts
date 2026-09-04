@@ -36,28 +36,14 @@ export class GameQueueService {
      */
     async moveGameInQueue(userId: string, queueMovementDto: QueueMovementDto): Promise<void> {
         const { beforeId, afterId, gameId } = queueMovementDto;
-        const neighborIds = [beforeId, afterId, gameId].filter((id): id is string => id != null);
 
-        const entries = await this.gameQueueEntryRepository.find({
-            where: {
-                userId,
-                gameId: In(neighborIds)
-            }
-        });
+        let [left, center, right] = await this.findNeighbors(userId, beforeId, gameId, afterId);
 
-        let left: GameQueueEntry | undefined;
-        let center: GameQueueEntry | undefined;
-        let right: GameQueueEntry | undefined;
-
-        entries.forEach(entry => {
-            if (entry.gameId === beforeId) {
-                left = entry;
-            } else if (entry.gameId === gameId) {
-                center = entry;
-            } else if (entry.gameId === afterId) {
-                right = entry;
-            }
-        });
+        if (!this.isThereSpace(left?.order, right?.order)) {
+            // if there is no espace, rebalance and query again
+            await this.rebalanceQueue(userId);
+            [left, center, right] = await this.findNeighbors(userId, beforeId, gameId, afterId);
+        }
 
         const newOrder = this.calculateOrder(left?.order, right?.order);
 
@@ -70,6 +56,53 @@ export class GameQueueService {
                 this.gameQueueEntryRepository.create({ userId, gameId, order: newOrder })
             );
         }
+    }
+
+    private async findNeighbors(userId: string, leftId: string | null, centerId: string, rightId: string | null): Promise<[GameQueueEntry | null, GameQueueEntry | null, GameQueueEntry | null]> {
+        const neighborIds = [leftId, centerId, rightId].filter((id): id is string => id != null);
+
+        const entries = await this.gameQueueEntryRepository.find({
+            where: {
+                userId,
+                gameId: In(neighborIds)
+            }
+        });
+
+        let left: GameQueueEntry | null = null;
+        let center: GameQueueEntry | null = null;
+        let right: GameQueueEntry | null = null;
+
+        entries.forEach(entry => {
+            if (entry.gameId === leftId) {
+                left = entry;
+            } else if (entry.gameId === centerId) {
+                center = entry;
+            } else if (entry.gameId === rightId) {
+                right = entry;
+            }
+        });
+
+        return [left, center, right];
+    }
+
+    private isThereSpace(leftOrder: number | undefined, rightOrder: number | undefined) {
+        // end case
+        if (rightOrder === undefined) return true;
+        // in betweeen or start case
+        return (rightOrder - (leftOrder ?? 0)) > 1;
+    }
+
+    private async rebalanceQueue(userId: string) {
+        const allEntries = await this.gameQueueEntryRepository.find({
+            where: { userId }, order: { order: 'ASC' }
+        });
+
+        const balancedEntries = allEntries.map((entry, i) => ({
+            id: entry.id,
+            order: (i + 1) * ORDER_GAP
+        })) as Partial<GameQueueEntry>[];
+
+        await this.gameQueueEntryRepository.save(balancedEntries);
     }
 
     /**

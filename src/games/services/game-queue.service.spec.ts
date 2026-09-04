@@ -9,7 +9,12 @@ describe('GameQueueService', () => {
     let repositoryMock: Partial<jest.Mocked<Repository<GameQueueEntry>>>;
 
     beforeEach(async () => {
-        repositoryMock = { find: jest.fn() };
+        repositoryMock = {
+            find: jest.fn(),
+            save: jest.fn(),
+            update: jest.fn(),
+            create: jest.fn((data: Partial<GameQueueEntry>) => data) as any,
+        };
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -39,5 +44,80 @@ describe('GameQueueService', () => {
             const entries = await service.getGamesInQueue('user-1');
             expect(entries.length).toBe(0);
         })
+    })
+
+    describe('moveGameInQueue', () => {
+        it('adds a new game to an empty queue', async () => {
+            repositoryMock.find.mockResolvedValue([]);
+
+            await service.moveGameInQueue('user-1', { gameId: 'a', beforeId: null, afterId: null });
+
+            expect(repositoryMock.save).toHaveBeenCalledWith(
+                expect.objectContaining({ userId: 'user-1', gameId: 'a', order: 1000 })
+            );
+        });
+
+        it('adds a new game at the end of the queue', async () => {
+            repositoryMock.find.mockResolvedValue([
+                { gameId: 'a', order: 1000, userId: 'user-1' } as GameQueueEntry,
+            ]);
+
+            await service.moveGameInQueue('user-1', { gameId: 'b', beforeId: 'a', afterId: null });
+
+            expect(repositoryMock.save).toHaveBeenCalledWith(
+                expect.objectContaining({ userId: 'user-1', gameId: 'b', order: 2000 })
+            );
+        });
+
+        it('adds a new game at the start of the queue', async () => {
+            repositoryMock.find.mockResolvedValue([
+                { gameId: 'a', order: 1000, userId: 'user-1' } as GameQueueEntry,
+            ]);
+
+            await service.moveGameInQueue('user-1', { gameId: 'b', beforeId: null, afterId: 'a' });
+
+            expect(repositoryMock.save).toHaveBeenCalledWith(
+                expect.objectContaining({ userId: 'user-1', gameId: 'b', order: 500 })
+            );
+        });
+
+        it('moves an already-queued game between two neighbors', async () => {
+            repositoryMock.find.mockResolvedValue([
+                { id: 'a-id', gameId: 'a', order: 1000, userId: 'user-1' } as GameQueueEntry,
+                { id: 'b-id', gameId: 'b', order: 3000, userId: 'user-1' } as GameQueueEntry,
+                { id: 'moved-id', gameId: 'moved', order: 5000, userId: 'user-1' } as GameQueueEntry,
+            ]);
+
+            await service.moveGameInQueue('user-1', { gameId: 'moved', beforeId: 'a', afterId: 'b' });
+
+            expect(repositoryMock.update).toHaveBeenCalledWith('moved-id', { order: 2000 });
+            expect(repositoryMock.save).not.toHaveBeenCalled();
+        });
+
+        it('rebalances the queue and retries when there is no room between neighbors', async () => {
+            repositoryMock.find
+                .mockResolvedValueOnce([
+                    { id: 'a-id', gameId: 'a', order: 5, userId: 'user-1' } as GameQueueEntry,
+                    { id: 'b-id', gameId: 'b', order: 6, userId: 'user-1' } as GameQueueEntry,
+                ]) // initial neighbor lookup: no integer between 5 and 6
+                .mockResolvedValueOnce([
+                    { id: 'a-id', gameId: 'a', order: 5, userId: 'user-1' } as GameQueueEntry,
+                    { id: 'b-id', gameId: 'b', order: 6, userId: 'user-1' } as GameQueueEntry,
+                ]) // full queue fetched for the rebalance
+                .mockResolvedValueOnce([
+                    { id: 'a-id', gameId: 'a', order: 1000, userId: 'user-1' } as GameQueueEntry,
+                    { id: 'b-id', gameId: 'b', order: 2000, userId: 'user-1' } as GameQueueEntry,
+                ]); // neighbor lookup retried after rebalancing
+
+            await service.moveGameInQueue('user-1', { gameId: 'new', beforeId: 'a', afterId: 'b' });
+
+            expect(repositoryMock.save).toHaveBeenNthCalledWith(1, [
+                { id: 'a-id', order: 1000 },
+                { id: 'b-id', order: 2000 },
+            ]);
+            expect(repositoryMock.save).toHaveBeenNthCalledWith(2,
+                expect.objectContaining({ userId: 'user-1', gameId: 'new', order: 1500 })
+            );
+        });
     })
 })
